@@ -21,8 +21,13 @@ Díky webové architektuře je aplikace nezávislá na platformě, nicméně ref
 
 Architektura systému je navržena tak, aby v praxi ukazovala aplikaci probírané látky v předmětu Algoritmizace a programování 2. Klíčové datové struktury a algoritmy nebyly převzaty z vestavěných knihoven Pythonu, ale jsou implementovány zcela od základu jako vlastní řešení. Systém je modulárně rozdělen na následující části:
 
-### `tridy.py` (Objektový model a praktické využití dědičnosti)
-Modul implementuje objektově orientovaný přístup pro modelování entit uživatelů. Je zde využita dědičnost – od abstraktní základní třídy `Osoba` dědí třída `Zamestnanec` (reprezentující uživatele s čipem/PINem) a z té následně vychází třída `Admin` (uživatel s rozšířenými přihlašovacími údaji pro administraci). Tento návrh eliminuje duplicitu kódu a demonstruje využití polymorfismu v praxi. Nedílnou součástí tříd je také zapouzdření a zabezpečení dat (např. ukládání otisků hesel a čipů).
+### `tridy.py` – objektový model a využití dědičnosti
+
+Modul implementuje objektově orientovaný přístup pro modelování uživatelů systému. Je zde využita **dědičnost**, kdy od abstraktní základní třídy `Osoba` dědí třída `Zamestnanec` (reprezentující uživatele s čipem/PINem) a z ní následně vychází třída `Admin` (uživatel s rozšířenými administrátorskými oprávněními).
+
+Tento návrh eliminuje duplicitu kódu a zároveň demonstruje praktické využití **polymorfismu**, kdy lze s objekty pracovat jednotně přes společné rozhraní základní třídy.
+
+Nedílnou součástí návrhu je také **zapouzdření a zabezpečení citlivých dat**. Citlivé údaje, jako jsou hesla, osobní PIN kódy nebo identifikátory RFID čipů, nejsou nikdy ukládány v prostém textu (plain text). Místo toho je použita specializovaná kryptografická knihovna, která zajišťuje jejich bezpečné **hashování a šifrování**, čímž se minimalizuje riziko jejich zneužití.
 
 ### `struktury.py` (Abstraktní datové typy a spojové struktury)
 Tenhle soubor obsahuje vlastní implementace datových struktur vytvořených podle teoretických principů:
