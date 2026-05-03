@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  dochazkac:
+    image: python:3.12-slim
+    container_name: server_dochazka
+    working_dir: /app
+    volumes:
+      # Mapování složek: "cesta_v_nasu:cesta_v_kontejneru"
+      - /volume1/Internal/Dochazkac:/app
+      - /volume1/Vedeni/Dochazkac:/vedeni
+    ports:
+      - "559:559"
+    environment:
+      - TZ=Europe/Prague
+    # Příkaz pro spuštění: nainstaluje Flask a spustí aplikaci
+    command: /bin/sh -c "pip install flask werkzeug && python app.py"
+    restart: unless-stopped

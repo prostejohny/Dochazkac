@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Docházkový systém</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='obrazky/ikony/dochazkac_logo.ico') }}">
+  
+  <link rel="stylesheet" href="{{ url_for('static', filename='styly/style.css') }}">
+</head>
+<body>
+
+<!-- TENTO BLOK SEM VLOŽ -->
+<div id="admin-loader" style="display: none;">
+  <div class="admin-loader-content">
+    <div class="logo-ring">
+      <img src="/static/obrazky/loga/dochazkac_logo.png" alt="Logo">
+    </div>
+    <div class="admin-loader-text">Ověřuji přístup...</div>
+  </div>
+</div>
+<!-- KONEC VLOŽENÉHO BLOKU -->
+
+<div id="screensaver" onclick="skrytSporic()">
+...
+  <div class="screensaver-content">
+    <div id="screensaver-time">00:00</div>
+    <div class="screensaver-text">Stisknutím nebo pípnutím probudíte</div>
+  </div>
+</div>
+
+<div id="notifikace">
+  <div class="toast-inner">
+    <div class="toast-action" id="toast-action">Příchod</div>
+    <div class="toast-name" id="toast-name">Jméno zaměstnance</div>
+    <div class="toast-msg" id="toast-msg">Vítejte!</div>
+    <div class="toast-bar"><div class="toast-bar-fill" id="toast-bar-fill"></div></div>
+  </div>
+</div>
+
+<div id="terminal-view" class="container">
+  <div class="header">
+    <div class="school-info">
+      <div class="school-name">Docházkový systém</div>
+      <div id="vyucovaci-hodina">Načítám rozvrh…</div>
+    </div>
+    <div class="clock-block">
+      <div id="hodiny">00:00:00</div>
+      <div id="datum">Načítám datum…</div>
+    </div>
+  </div>
+
+  <div class="grid-akce">
+    <div class="btn-akce btn-prichod" onclick="vyberAkci(this,'Příchod')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.29 16.7c-.39.4-.39 1.03 0 1.42.39.39 1.03.39 1.42 0L18.12 13.7c.39-.39.39-1.03 0-1.42l-4.41-4.41c-.39-.39-1.03-.39-1.42 0-.39.39-.39 1.03 0 1.42L15.59 12.58H4c-.55 0-1 .45-1 1s.45 1 1 1h11.59l-3.3 2.12z"/></svg>
+      <h4>Příchod</h4>
+    </div>
+    <div class="btn-akce btn-odchod" onclick="vyberAkci(this,'Odchod')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.71 16.7c.39.4.39 1.03 0 1.42-.39.39-1.03.39-1.42 0L5.88 13.7c-.39-.39-.39-1.03 0-1.42l4.41-4.41c.39-.39 1.03-.39 1.42 0 .39.39.39 1.03 0 1.42L8.41 12.58H20c.55 0 1 .45 1 1s-.45 1-1 1H8.41l3.3 2.12z"/></svg>
+      <h4>Odchod</h4>
+    </div>
+    <div class="btn-akce btn-lekar" onclick="vyberAkci(this,'Lékař')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 6V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v2H3c-.55 0-1 .45-1 1v13c0 .55.45 1 1 1h18c.55 0 1-.45 1-1V7c0-.55-.45-1-1-1h-5zM10 4h4v2h-4V4zm3 6.5h2.5v3H13V16h-2v-2.5H8.5v-3H11V8h2v2.5z"/></svg>
+      <h4>Lékař</h4>
+    </div>
+    <div class="btn-akce btn-pauza" onclick="vyberAkci(this,'Pauza')">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
+      <h4>Pauza</h4>
+    </div>
+  </div>
+
+  <div class="spodni-lista">
+    <button class="btn-sekundarni" onclick="otevriNumpad('zaznam')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+      Zapomněl jsem čip (Zadat PIN)
+    </button>
+    <button class="btn-sekundarni btn-admin" onclick="otevriNumpad('admin')" title="Administrace">
+      <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    </button>
+  </div>
+</div>
+
+<div id="admin-view" class="container" style="display: none;">
+  <div class="admin-topbar">
+    <h2 class="admin-title"><div class="live-dot"></div>Administrace systému</h2>
+    <button class="btn-zpet btn-odhlasit" onclick="odhlasitAdmina()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+      Odhlásit se
+    </button>
+  </div> <!-- ZDE CHYBĚL TENTO UZAVÍRACÍ TAG -->
+
+  <!-- NAVIGAČNÍ TLAČÍTKA -->
+  <div class="admin-tabs">
+    <button class="tab-btn active" onclick="prepniZalozku('tab-export',this)">Export a logy</button>
+    <button class="tab-btn" onclick="prepniZalozku('tab-sprava',this)">Správa zaměstnanců</button>
+    <button class="tab-btn" onclick="prepniZalozku('tab-admini',this)">Nastavení</button>
+  </div>
+
+  <!-- NÁSLEDUJE SKUTEČNÝ OBSAH ZÁLOŽEK -->
+  
+  <!-- ZÁLOŽKA 1: EXPORT (Pouze jednou!) -->
+  <div id="tab-export" class="tab-obsah">
+    <div class="admin-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin-bottom: 0;">Historie docházky</h3>
+        <div class="stat-badge" id="stat-pritomni" style="cursor: pointer;" onclick="otevriPritomne()" title="Kliknutím zobrazíte jmenný seznam">Aktuálně ve škole: <strong>0 / 0</strong></div>
+      </div>
+      
+      <div class="filtr-lista">
+        <div class="filtr-skupina">
+          <label>Hledat zaměstnance:</label>
+          <input type="search" id="filter-user" placeholder="Začněte psát jméno..." list="user-datalist" oninput="aplikujFiltry()">
+          <datalist id="user-datalist"></datalist>
+        </div>
+        <div class="filtr-skupina" style="flex: 0.5;">
+          <label>Datum Od:</label>
+          <input type="date" id="filter-od" onchange="aplikujFiltry()">
+        </div>
+        <div class="filtr-skupina" style="flex: 0.5;">
+          <label>Datum Do:</label>
+          <input type="date" id="filter-do" onchange="aplikujFiltry()">
+        </div>
+        <div class="filtr-skupina" style="flex: 0.5; justify-content: flex-end;">
+          <button onclick="stahnoutXLSX()" class="btn-csv">↓ Stáhnout XLSX</button>
+        </div>
+      </div>
+      
+      <!-- Následuje zbytek tvé tabulky a další kód -->
+
+      <table>
+        <thead><tr><th>Datum a Čas</th><th>Zaměstnanec</th><th>Akce</th></tr></thead>
+        <tbody id="tabulka-logu"></tbody>
+      </table>
+      <div id="strankovani" class="strankovani-ovladani"></div>
+    </div>
+
+    <div class="admin-card" style="margin-top: 25px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        <h3 style="margin: 0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: bottom; margin-right: 8px;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+          Historie přístupů správců
+        </h3>
+      </div>
+      
+      <!-- PŘIDANÁ FILTRACE A EXPORT PRO ADMIN LOGY -->
+      <div class="filtr-lista">
+        <div class="filtr-skupina" style="flex: 0.5;">
+          <label>Datum Od:</label>
+          <input type="date" id="admin-filter-od" onchange="vykresliTabulkuAdminLogu()">
+        </div>
+        <div class="filtr-skupina" style="flex: 0.5;">
+          <label>Datum Do:</label>
+          <input type="date" id="admin-filter-do" onchange="vykresliTabulkuAdminLogu()">
+        </div>
+        <div class="filtr-skupina" style="flex: 0.5; justify-content: flex-end;">
+          <button onclick="stahnoutAdminXLSX()" class="btn-csv">↓ Stáhnout XLSX</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Datum a Čas</th>
+            <th>Správce</th>
+            <th>Způsob ověření</th>
+          </tr>
+        </thead>
+        <tbody id="tabulka-admin-logu"></tbody>
+      </table>
+      
+      <div id="strankovani-admin" class="strankovani-ovladani"></div>
+      
+    </div>
+  </div> 
+  
+  <div id="tab-sprava" class="tab-obsah" style="display: none;">
+    <div class="admin-card">
+      <h3 id="formular-titulek">Přidat nového zaměstnance</h3>
+      <input type="hidden" id="edit-id" value="">
+      <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <input type="text" id="novy-jmeno" placeholder="Jméno a příjmení" style="flex: 2; min-width: 200px;">
+        <input type="text" id="novy-cip" placeholder="Kód z čipu" style="flex: 1; min-width: 120px;">
+        <input type="text" id="novy-pin" placeholder="PIN (max 4 čísla)" style="flex: 1; min-width: 120px;" maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+        <select id="novy-role" style="flex: 1; min-width: 140px;">
+          <option value="Administrator">Administrátor</option> 
+          <option value="Reditel">Ředitel</option>
+          <option value="Zastupce">Zástupce</option> <!-- TENTO ŘÁDEK PŘIDEJTE -->
+          <option value="Ucitel" selected>Učitel</option>
+          <option value="Asistent">Asistent</option>
+          <option value="Provozni">Provozní</option>
+          <option value="Druzina">Družina</option>
+        </select>
+        <input type="text" id="novy-hlaska-prichod" placeholder="Hláška pro příchod (nepovinné)" style="flex: 2; min-width: 250px;">
+        <input type="text" id="novy-hlaska-odchod" placeholder="Hláška pro odchod (nepovinné)" style="flex: 2; min-width: 250px;">
+        <button id="btn-ulozit-uzivatele" class="btn-ulozit" onclick="ulozitUzivatele()" style="flex: 1; min-width: 120px;">+ Přidat</button>
+        <button id="btn-zrusit-upravu" onclick="zrusitUpravu()" style="display: none; background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: var(--text-muted);">Zrušit</button>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        <h3 style="margin: 0;">Seznam registrovaných zaměstnanců</h3>
+        <!-- NOVÉ: Vyhledávací pole -->
+        <input type="search" id="hledat-zamestnance" placeholder="Hledat zaměstnance..." oninput="filtrujZamestnance()" style="max-width: 300px; padding: 10px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1);">
+      </div>
+      
+      <table>
+        <thead><tr><th>Jméno</th><th>Kód čipu</th><th>PIN</th><th>Kategorie</th><th>Hláška (P / O)</th><th>Akce</th></tr></thead>
+        <tbody id="tabulka-uzivatelu"></tbody>
+      </table>
+      
+      <!-- ... (zde končí tabulka a stránkování uživatelů) ... -->
+      <div id="strankovani-uzivatelu" class="strankovani-ovladani"></div>
+    </div> <!-- Tady končí druhá karta -->
+
+    <!-- KARTA: EXPORT ZAMĚSTNANCŮ -->
+    <div class="admin-card" style="margin-top: 25px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1; min-width: 250px;">
+          <h3 style="margin-bottom: 8px;">Export stávajících zaměstnanců</h3>
+          <p style="font-size: 0.95rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+            Stáhněte si kompletní seznam všech registrovaných osob, včetně jejich přiřazených kategorií, vlastních hlášek a systémových práv, v přehledném formátu pro Excel.
+          </p>
+        </div>
+        <button onclick="stahnoutZamestnanceXLSX()" class="btn-csv" style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Stáhnout XLSX
+        </button>
+      </div>
+    </div>
+
+  </div> <!-- Zde končí celý id="tab-sprava" -->
+
+  <div id="tab-admini" class="tab-obsah" style="display: none;">
+    <div class="settings-grid">
+      
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Organizace</h3>
+        <div class="form-grid">
+          <div class="filtr-skupina" style="grid-column: 1 / -1;">
+            <label>Název školy / organizace</label>
+            <input type="text" id="set-nazev" placeholder="Zadejte název">
+          </div>
+          <div class="filtr-skupina">
+            <label>IČO</label>
+            <input type="text" id="set-ico" placeholder="IČO">
+          </div>
+          <div class="filtr-skupina">
+            <label>Telefon</label>
+            <input type="text" id="set-tel" placeholder="Telefon">
+          </div>
+          
+          <div class="filtr-skupina">
+            <label>Kontaktní E-mail (Pro obnovu)</label>
+            <input type="email" id="set-kontakt-email" placeholder="podpora@skola.cz">
+          </div>
+          <div class="filtr-skupina">
+            <label>Sídlo / Adresa</label>
+            <input type="text" id="set-adresa" placeholder="Ulice, Město, PSČ">
+          </div>
+          
+          <button class="btn-ulozit" style="grid-column: 1 / -1; margin-top: 10px;" onclick="ulozitNastaveni('obecne')">Uložit údaje organizace</button>
+        </div>
+      </div>
+
+  <div class="admin-card" id="nastaveni-karta-zalohy" style="grid-column: 1 / -1;">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg> 
+          Zálohování
+        </h3>
+        
+        <p style="font-size: 0.9rem; color: var(--text-muted2); margin-bottom: 15px;">
+          Zálohy se ukládají přímo do kořenové složky aplikace (do podsložky <b>zalohy_databaze</b>).
+        </p>
+      
+        <div class="filtr-skupina">
+          <label>Frekvence automatického ukládání</label>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch;">
+            <select id="set-zaloha-frekvence" style="flex: 1; min-width: 200px;">
+              <option value="denne">Denně</option>
+              <option value="tydne">Týdně</option>
+              <option value="mesicne">Měsíčně</option>
+            </select>
+            <button class="btn-tabulka" onclick="zalohovatHned()" style="background-color: var(--accent-blue); padding: 12px 20px; font-size: 1rem; border-radius: 12px; white-space: nowrap; flex: 1; min-width: 150px; box-shadow: 0 4px 10px rgba(59,130,246,0.3); display: flex; justify-content: center; align-items: center;">Zálohovat HNED</button>
+          </div>
+        </div>
+        
+        <div class="nastaveni-radek" style="grid-column: 1 / -1; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1);">
+          <div>
+            <strong style="color: var(--text-main);">Zapnout automatické zálohování databáze (.db)</strong>
+            <div style="font-size: 0.85rem; color: var(--text-muted2);">Pravidelně uchovává data podle nastavené frekvence.</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="set-zaloha-db"><span class="slider"></span></label>
+        </div>
+      
+        <button class="btn-ulozit" style="width: 100%; margin-top: 15px;" onclick="ulozitNastaveni('zalohy')">
+          Uložit nastavení zálohování
+        </button>
+      </div>
+
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg> 
+          GDPR a Soukromí
+        </h3>
+        <div class="form-grid">
+          <div class="filtr-skupina" style="grid-column: 1 / -1;">
+            <label>Automatické mazání historie (Retence dat)</label>
+            <select id="set-retence">
+              <option value="nikdy">Nikdy nemazat (Uchovávat trvale)</option>
+              <option value="1rok" selected>Mazat po 1 roce</option>
+              <option value="3roky">Mazat po 3 letech</option>
+            </select>
+            <div style="font-size: 0.85rem; color: var(--text-muted2); margin-top: 5px;">Z hlediska GDPR se doporučuje data o docházce po uplynutí zákonné lhůty automaticky odstraňovat.</div>
+          </div>
+          <button class="btn-ulozit" style="grid-column: 1 / -1; margin-top: 10px;" onclick="ulozitNastaveni('gdpr')">Uložit pravidla soukromí</button>
+        </div>
+      </div>
+
+
+      <!-- KARTA: VZHLED EXPORTŮ A LOGA -->
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <h3 style="margin-bottom: 20px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:text-bottom; margin-right:5px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> 
+          Vzhled exportů a výpisů
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted2); margin-bottom: 20px;">Zvolte si logo, které se bude automaticky vkládat do záhlaví při stahování výpisů docházky (XLSX).</p>
+        
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; background: rgba(0,0,0,0.02); padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05);">
+            <!-- Levá část: Výběr loga -->
+            <div style="flex: 1; min-width: 250px;">
+              <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Aktivní logo (Záhlaví tabulky)</label>
+              <div class="mobile-stack" style="display: flex; gap: 10px;">
+              <!-- ODEBRÁNO onchange -->
+              <select id="set-logo" style="flex: 1; min-width: 0;">
+                <option value="dochazkac_logo.png" selected>Výchozí (Docházkáč)</option>
+              </select>
+              <button class="btn-tabulka btn-smazat" onclick="smazatLogo()" style="width: 52px; height: 52px; display: flex; justify-content: center; align-items: center; padding: 0; border-radius: 12px; flex-shrink: 0;" title="Smazat logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+    
+          <!-- Pravá část: Nahrávání -->
+          <div style="flex: 1; min-width: 250px;">
+            <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Nahrát vlastní logo</label>
+            <div class="mobile-stack" style="display: flex; gap: 10px;">
+              <input type="file" id="upload-logo-input" accept="image/jpeg, image/png, image/webp" style="flex: 1; min-width: 0; padding: 12px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; font-size: 0.95rem;">
+              <button class="btn-tabulka btn-upravit" onclick="nahratLogo()" style="padding: 0 20px; font-size: 1rem; border-radius: 12px; white-space: nowrap; flex-shrink: 0;">Nahrát</button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted2); margin-top: 6px; padding-left: 5px;">Podporované: JPG, PNG (Max. 2 MB | 1024x1024)</div>
+          </div>
+      </div>
+        
+        <!-- NOVÉ TLAČÍTKO ULOŽIT -->
+        <button class="btn-ulozit" style="width: 100%; margin-top: 15px;" onclick="ulozitNastaveni('export')">Uložit vzhled exportů</button>
+      </div>
+
+      
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <h3 style="margin-bottom: 25px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg> Chování terminálu</h3>
+        
+        <!-- BLOK 1: Časování a automatizace -->
+        <div class="nastaveni-blok">
+          <div class="form-grid">
+            <div class="filtr-skupina">
+              <label>Spořič obrazovky (sekundy)</label>
+              <input type="number" id="set-sporic" value="60" min="10" max="600">
+            </div>
+            <div class="filtr-skupina">
+              <label>Reset volby akce (sekundy)</label>
+              <input type="number" id="set-reset" value="30" min="5" max="120">
+            </div>
+          </div>
+          <div class="nastaveni-radek" style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: none;">
+            <div>
+              <strong style="color: var(--text-main);">Automatický odchod o půlnoci</strong>
+              <div style="font-size: 0.85rem; color: var(--text-muted2);">Zapomnětlivce systém na konci dne odhlásí automaticky.</div>
+            </div>
+            <label class="switch"><input type="checkbox" id="set-auto-odchod" checked><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <!-- BLOK 2: Vzhled terminálu -->
+        <div class="nastaveni-blok">
+          <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <!-- Levá část: Výběr tapety -->
+            <div style="flex: 1; min-width: 250px;">
+              <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Aktivní tapeta</label>
+              <div style="display: flex; gap: 10px;">
+                <select id="set-tapeta" onchange="zmenitTapetu(this.value)" style="flex: 1; min-width: 0;">
+                  <option value="dochazkac.webp">Výchozí (Docházkáč)</option>
+                  <option value="skola.webp" selected>Fotografie (Budova školy)</option>
+                </select>
+                <!-- ZMĚNA: Tlačítko pro smazání s profi SVG ikonkou místo emoji -->
+                <button class="btn-tabulka btn-smazat" onclick="smazatTapetu()" style="width: 52px; height: 52px; display: flex; justify-content: center; align-items: center; padding: 0; border-radius: 12px; flex-shrink: 0;" title="Smazat tapetu">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Pravá část: Nahrávání -->
+            <div style="flex: 1; min-width: 250px;">
+              <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Nahrát novou tapetu</label>
+              <div style="display: flex; gap: 10px;">
+                <!-- ZMĚNA: Samostatný input a samostatné tlačítko -->
+                <input type="file" id="upload-tapeta-input" accept="image/jpeg, image/png, image/webp" style="flex: 1; min-width: 0; padding: 12px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; font-size: 0.95rem; color: var(--text-main);">
+                <button class="btn-tabulka btn-upravit" onclick="nahratTapetu()" style="padding: 0 20px; font-size: 1rem; border-radius: 12px; white-space: nowrap; flex-shrink: 0;">Nahrát</button>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted2); margin-top: 6px; padding-left: 5px;">Podporované: JPG, PNG, WEBP (Max. 2 MB | 1920x1080)</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-ulozit" style="width: 100%; margin-top: 5px;" onclick="ulozitNastaveni('terminal')">Uložit nastavení terminálu</button>
+
+        <!-- BLOK 3: Systémová akční tlačítka -->
+        <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap;">
+          <button class="btn-system btn-sys-blue" onclick="akceSystemu('restart')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+            Restartovat
+          </button>
+          
+          <button class="btn-system btn-sys-yellow" onclick="akceSystemu('problem')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            Nahlásit problém
+          </button>
+
+          <button class="btn-system btn-sys-red" onclick="akceSystemu('vypnout')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+            Vypnout terminál
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3 style="margin: 0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Harmonogram hodin a přestávek</h3>
+          <button class="btn-ulozit" onclick="ulozitNastaveni('rozvrh')" style="padding: 8px 15px; font-size: 0.95rem;">Uložit rozvrh</button>
+        </div>
+        
+        <div style="margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+          <label style="display: block; font-weight: 800; margin-bottom: 12px; color: var(--text-muted); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">Aktivní pracovní dny</label>
+          <div class="pracovni-dny-grid">
+            <label class="day-checkbox"><input type="checkbox" value="1" checked><span>Po</span></label>
+            <label class="day-checkbox"><input type="checkbox" value="2" checked><span>Út</span></label>
+            <label class="day-checkbox"><input type="checkbox" value="3" checked><span>St</span></label>
+            <label class="day-checkbox"><input type="checkbox" value="4" checked><span>Čt</span></label>
+            <label class="day-checkbox"><input type="checkbox" value="5" checked><span>Pá</span></label>
+            <label class="day-checkbox"><input type="checkbox" value="6"><span>So</span></label>
+            <label class="day-checkbox"><input type="checkbox" value="0"><span>Ne</span></label>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="table-nastaveni">
+            <thead>
+              <tr>
+                <th style="width: 40%">Název úseku</th>
+                <th>Od</th>
+                <th>Do</th>
+                <th style="text-align: center;">Typ</th>
+                <th style="text-align: center;">Akce</th>
+              </tr>
+            </thead>
+            <tbody id="rozvrh-body">
+              <tr>
+                <td><input type="text" value="0. vyučovací hodina"></td>
+                <td><input type="time" value="07:05"></td>
+                <td><input type="time" value="07:50"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="1. vyučovací hodina"></td>
+                <td><input type="time" value="08:00"></td>
+                <td><input type="time" value="08:45"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="2. vyučovací hodina"></td>
+                <td><input type="time" value="08:55"></td>
+                <td><input type="time" value="09:40"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="3. vyučovací hodina"></td>
+                <td><input type="time" value="10:00"></td>
+                <td><input type="time" value="10:45"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="4. vyučovací hodina"></td>
+                <td><input type="time" value="10:55"></td>
+                <td><input type="time" value="11:40"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="5. vyučovací hodina"></td>
+                <td><input type="time" value="11:50"></td>
+                <td><input type="time" value="12:35"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="6. vyučovací hodina"></td>
+                <td><input type="time" value="12:45"></td>
+                <td><input type="time" value="13:30"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="7. vyučovací hodina"></td>
+                <td><input type="time" value="13:35"></td>
+                <td><input type="time" value="14:20"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="8. vyučovací hodina"></td>
+                <td><input type="time" value="14:25"></td>
+                <td><input type="time" value="15:10"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+              <tr>
+                <td><input type="text" value="9. vyučovací hodina"></td>
+                <td><input type="time" value="15:15"></td>
+                <td><input type="time" value="16:00"></td>
+                <td style="text-align: center;"><span class="badge badge-hodina">Hodina</span></td>
+                <td style="text-align: center;"><button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <button class="btn-tabulka btn-upravit" onclick="pridatRadekRozvrhu()" style="margin-top: 15px;">+ Přidat další úsek</button>
+        </div>
+      </div>
+
+      <div class="admin-card" style="grid-column: 1 / -1;">
+        <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Práva a administrátoři</h3>
+        
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+          <select id="admin-vyber-uzivatele" style="flex: 2; min-width: 200px;"></select>
+          <input type="text" id="admin-username" placeholder="Uživatelské jméno" style="flex: 1.5; min-width: 150px;">
+          <input type="email" id="admin-email" placeholder="Pracovní e-mail" style="flex: 2; min-width: 200px;">
+          <input type="password" id="admin-heslo" placeholder="Heslo pro web" style="flex: 1; min-width: 150px;">
+          <button class="btn-ulozit" onclick="pridatAdmina()" style="flex: 1; min-width: 120px;">+ Přiřadit</button>
+        </div>
+
+        <table>
+          <thead><tr><th>Jméno zaměstnance</th><th>Přihlašovací údaje</th><th>Akce</th></tr></thead>
+          <tbody id="tabulka-adminu"></tbody>
+        </table>
+      </div>
+
+      <div class="admin-card" style="grid-column: 1 / -1; border: 2px solid var(--accent-red);">
+        <h3 style="color: var(--accent-red); border-bottom-color: rgba(239, 68, 68, 0.1);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:text-bottom; margin-right:5px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          Tovární nastavení
+        </h3>
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-weight: 500;">Tato akce nevratně smaže celou databázi (všechny zaměstnance, nastavení i historii docházky) a vrátí systém do původního stavu po instalaci.</p>
+        
+        <div class="form-grid">
+          <div class="filtr-skupina">
+            <label>Napište slovo "RESTARTOVAT"</label>
+            <input type="text" id="reset-potvrzeni" placeholder="Napište RESTARTOVAT pro potvrzení" autocomplete="off" style="border-color: rgba(239,68,68,0.4);">
+          </div>
+          <div class="filtr-skupina">
+            <label>Váš přihlašovací E-mail / Login</label>
+            <input type="text" id="reset-login" placeholder="Zadejte svůj login" autocomplete="off">
+          </div>
+          <div class="filtr-skupina">
+            <label>Vaše administrátorské heslo</label>
+            <input type="password" id="reset-heslo" placeholder="Zadejte heslo" autocomplete="new-password">
+          </div>
+          <div class="filtr-skupina">
+            <label style="opacity: 0; user-select: none;">Potvrzení</label>
+            <button class="btn-system btn-sys-red" onclick="provedTovarniReset()" style="margin: 0; padding: 14px;">Provést tovární reset</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="numpad-modal">
+  <div class="numpad-container">
+    <h3 id="numpad-titulek">Zadejte PIN</h3>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot-0"></div><div class="pin-dot" id="dot-1"></div><div class="pin-dot" id="dot-2"></div><div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="numpad-grid">
+      <button class="num-btn" onclick="pridejCislo('1')">1</button>
+      <button class="num-btn" onclick="pridejCislo('2')">2</button>
+      <button class="num-btn" onclick="pridejCislo('3')">3</button>
+      <button class="num-btn" onclick="pridejCislo('4')">4</button>
+      <button class="num-btn" onclick="pridejCislo('5')">5</button>
+      <button class="num-btn" onclick="pridejCislo('6')">6</button>
+      <button class="num-btn" onclick="pridejCislo('7')">7</button>
+      <button class="num-btn" onclick="pridejCislo('8')">8</button>
+      <button class="num-btn" onclick="pridejCislo('9')">9</button>
+      <button class="num-btn btn-clear" onclick="smazPin()">C</button>
+      <button class="num-btn" onclick="pridejCislo('0')">0</button>
+      <button class="num-btn btn-ok" onclick="potvrditPin()">OK</button>
+    </div>
+    <button class="btn-zrusit-modal" onclick="zavriNumpad()">Zrušit</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="admin-login-modal">
+  <div class="numpad-container login-modal-wrapper">
+    
+    <h3 class="login-title" id="admin-modal-title">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      Přihlášení správce
+    </h3>
+    
+    <div id="login-view-step">
+      <div class="login-input-group">
+        <input type="text" id="admin-user" class="login-input" placeholder="Uživatelské jméno / E-mail" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <input type="password" id="admin-pass" class="login-input" placeholder="Heslo">
+        <button onclick="overitAdminLogin()" class="btn-login">Vstoupit</button>
+      </div>
+      
+      <div id="login-error">Nesprávné jméno nebo heslo!</div>
+      
+      <div style="text-align: center; margin-bottom: 20px;">
+        <a href="#" onclick="zapomenuteHeslo(event)" style="color: var(--accent-blue); font-weight: 600; text-decoration: none; font-size: 1.1rem;">Zapomněl/a jsem heslo</a>
+      </div>
+      
+      <button id="login-zrusit-btn" class="btn-zrusit-modal" onclick="zavriAdminLogin()">Zrušit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pritomni-modal">
+  <div class="numpad-container" style="width: 500px; max-height: 80vh; display: flex; flex-direction: column;">
+    <h3 style="color: var(--text-main); font-size: 1.5rem; margin-bottom: 20px; font-weight: 800;">Seznam přítomných</h3>
+    
+    <div id="seznam-pritomnych-obsah" style="text-align: left; margin-bottom: 20px; font-size: 1.1rem; color: var(--text-muted); overflow-y: auto; padding-right: 10px; min-height: 100px;">
+    </div>
+
+    <input type="search" id="hledat-pritomne" class="search-pritomni" placeholder="Hledat zaměstnance..." oninput="filtrujPritomne()">
+
+    <button class="btn-zrusit-modal" style="margin-top: 0;" onclick="zavriPritomne()">Zavřít seznam</button>
+  </div>
+</div>
+
+<input type="text" id="rfid-input" autofocus autocomplete="off" inputmode="none">
+
+<div id="wizard-view" class="container" style="display: none;">
+  <div class="wizard-box">
+    
+    <div class="wizard-header">
+      <h2>Docházkáč 1.0</h2>
+      <p>Moderní řešení pro Vaši školu</p>
+    </div>
+
+    <div class="wizard-progress" id="wiz-progress-container">
+      <div class="wizard-progress-bar" id="wiz-progress-bar"></div>
+    </div>
+
+    <div class="wizard-step active" id="wiz-step-1">
+      <h3 class="step-title">Krok 1: Údaje o organizaci</h3>
+      <div class="form-grid">
+        <div class="filtr-skupina" style="grid-column: 1 / -1;">
+          <label>Název školy / organizace</label>
+          <input type="text" id="wiz-nazev" placeholder="Volitelné" autofocus>
+        </div>
+        <div class="filtr-skupina">
+          <label>IČO</label>
+          <input type="text" id="wiz-ico" placeholder="Volitelné">
+        </div>
+        <div class="filtr-skupina">
+          <label>Telefonní kontakt</label>
+          <input type="text" id="wiz-tel" placeholder="Volitelné">
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-step" id="wiz-step-2">
+      <h3 class="step-title">Krok 2: Chování terminálu</h3>
+      <div class="form-grid">
+        <div class="filtr-skupina">
+          <label>Zrušení akce po nečinnosti (s)</label>
+          <input type="number" id="wiz-reset" value="30" min="5">
+        </div>
+        <div class="nastaveni-radek" style="grid-column: 1 / -1; padding-top: 15px;">
+          <div>
+            <strong style="color: var(--text-main);">Automatický odchod o půlnoci</strong>
+            <div style="font-size: 0.85rem; color: var(--text-muted2);">Pokud se zaměstnanec zapomene odhlásit, systém to udělá za něj.</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="wiz-auto-odchod" checked><span class="slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-step" id="wiz-step-3">
+      <h3 class="step-title">Krok 3: Účet hlavního správce</h3>
+      <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem;">Tento uživatel získá ihned přístup do administrace. Následně může sám sebe pípnutím i přihlašovat.</p>
+      <div class="form-grid">
+        <div class="filtr-skupina" style="grid-column: 1 / -1;">
+          <label>Jméno a příjmení</label>
+          <input type="text" id="wiz-admin-jmeno" placeholder="Jan Novák">
+        </div>
+        <div class="filtr-skupina">
+          <label>PIN pro terminál (4 čísla)</label>
+          <input type="text" id="wiz-admin-pin" placeholder="Např. 1234" maxlength="4" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4);">
+        </div>
+        <div class="filtr-skupina">
+          <label>Uživatelské jméno (Login)</label>
+          <input type="text" id="wiz-admin-username" placeholder="např. reditel">
+        </div>
+        <div class="filtr-skupina">
+          <label>Přihlašovací E-mail (Volitelné)</label>
+          <input type="email" id="wiz-admin-email" placeholder="admin@skola.cz">
+        </div>
+        <!-- ZMĚNA ZDE: Odebrán styl grid-column: 1 / -1; -->
+        <div class="filtr-skupina">
+          <label>Heslo (do Administrace)</label>
+          <input type="password" id="wiz-admin-heslo" placeholder="Zadejte heslo">
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-step" id="wiz-step-4" style="text-align: center; padding: 40px 0;">
+      <div class="wizard-loader"></div>
+      <h2 style="font-size: 2rem; color: var(--accent-blue); margin-top: 25px;">Vítejte v Docházkáči!</h2>
+      <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 10px;">Systém je připraven. Přesměrovávám na terminál...</p>
+    </div>
+
+    <div class="wizard-footer" id="wiz-footer">
+      <button id="btn-wiz-prev" class="btn-sekundarni" style="flex: 0 1 auto; padding: 15px 25px; display: none;" onclick="krokWizardu(-1)">Zpět</button>
+      <button id="btn-wiz-next" class="btn-ulozit" style="flex: 0 1 auto; padding: 15px 35px; margin-left: auto;" onclick="krokWizardu(1)">Pokračovat</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<script src="{{ url_for('static', filename='skripty/data.js') }}"></script>
+<script src="{{ url_for('static', filename='skripty/terminal.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='skripty/modaly.js') }}"></script>
+<script src="{{ url_for('static', filename='skripty/admin.js') }}?v=3"></script>
+
+</body>
+</html>
