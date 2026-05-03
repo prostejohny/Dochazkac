@@ -2,7 +2,7 @@ from typing import Protocol, List, Iterator, runtime_checkable
 import unicodedata  
 
 # =====================================================================
-# PROTOKOLY (INTERFACE) (Bod 10 sylabu)
+# PROTOKOLY (INTERFACE)
 # =====================================================================
 
 @runtime_checkable
@@ -26,7 +26,7 @@ class SpojovaStruktura(Protocol):
 
 
 # =====================================================================
-# JEDNOSMĚRNÝ SPOJOVÝ SEZNAM (ZÁSOBNÍK) PRO LOGY (Body 2, 6, 7 a 11 sylabu)
+# JEDNOSMĚRNÝ SPOJOVÝ SEZNAM (ZÁSOBNÍK) PRO LOGY
 # =====================================================================
 
 class ZaznamNode:
@@ -134,7 +134,7 @@ class HistorieDochazky:
         return vysledek
 
     # ---------------------------------------------------------
-    # ALGORITMY NAD SPOJOVOU STRUKTUROU (Body 3, 7 a 8 sylabu)
+    # ALGORITMY NAD SPOJOVOU STRUKTUROU
     # ---------------------------------------------------------
 
     def najdi_chybejici_odchody(self, dnesni_datum_str):
@@ -208,7 +208,7 @@ class HistorieDochazky:
 
 
 # =====================================================================
-# TŘÍDÍCÍ ALGORITMUS — INSERTION SORT (Body 4 a 5 sylabu)
+# TŘÍDÍCÍ ALGORITMUS — INSERTION SORT
 # =====================================================================
 
 def serad_zaznamy_podle_casu(seznam_zaznamu):
@@ -239,7 +239,7 @@ def serad_zaznamy_podle_casu(seznam_zaznamu):
 
 
 # =====================================================================
-# BINÁRNÍ VYHLEDÁVACÍ STROM (BST) PRO ZAMĚSTNANCE (Body 3, 4, 5, 6 sylabu)
+# BINÁRNÍ VYHLEDÁVACÍ STROM (BST) PRO ZAMĚSTNANCE
 # =====================================================================
 
 class UzivatelNode:
