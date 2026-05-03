@@ -1,4 +1,4 @@
-# Semestrální práce: Docházkáč 1.0
+# Docházkáč 1.0
 
 **Předmět:** Algoritmizace a programování 2
 
