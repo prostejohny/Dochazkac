@@ -1441,8 +1441,11 @@ function krokWizardu(smer) {
  *   4. Uloží výchozí nastavení terminálu (tapeta, spořič, auto-odchod)
  *   5. Po 5 sekundách schová loader, zobrazí terminál a přesměruje URL na /
  */
+/**
+ * Dokončí průvodce — uloží prvního správce a výchozí nastavení do databáze.
+ */
 async function dokoncitWizard() {
-  // 1. Skryjeme celý instalační průvodce a zapneme náš nový černý loader
+  // 1. Skryjeme celý instalační průvodce a zapneme náš černý loader
   document.getElementById('wizard-view').style.display = 'none';
   
   const loader = document.getElementById('admin-loader');
@@ -1450,31 +1453,48 @@ async function dokoncitWizard() {
       loader.classList.remove('fade-out');
       loader.style.display = 'flex';
       
-      // Změníme text loaderu na instalační zprávu
       const textEl = loader.querySelector('.admin-loader-text');
       if (textEl) textEl.innerText = 'Nastavuji a připravuji systém...';
   }
 
-  // 2. Pošleme všechna data do databáze (zaměstnanec + admin práva + výchozí nastavení)
+  // 2. Pošleme všechna data jedním požadavkem na nechráněný instalační endpoint
   try {
-    await fetch('/api/uzivatele/ulozit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: null, jmeno: document.getElementById('wiz-admin-jmeno').value.trim(), cip: "", pin: document.getElementById('wiz-admin-pin').value.trim(), role: "Administrator", hlaska_prichod: "Vítejte!", hlaska_odchod: "Hezký zbytek dne." }) });
-    const vsichni = await (await fetch('/api/uzivatele')).json();
-    const novyAdmin = vsichni.find(u => u.jmeno === document.getElementById('wiz-admin-jmeno').value.trim());
+    const instalacniData = {
+        jmeno: document.getElementById('wiz-admin-jmeno').value.trim(),
+        pin: document.getElementById('wiz-admin-pin').value.trim(),
+        username: document.getElementById('wiz-admin-username').value.trim(),
+        email: document.getElementById('wiz-admin-email').value.trim(),
+        heslo: document.getElementById('wiz-admin-heslo').value.trim()
+    };
 
-    if (novyAdmin) {
-        await fetch('/api/admin/ulozit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: novyAdmin.id, username: document.getElementById('wiz-admin-username').value.trim(), email: document.getElementById('wiz-admin-email').value.trim(), heslo: document.getElementById('wiz-admin-heslo').value.trim() }) });
+    const response = await fetch('/api/setup/dokoncit', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(instalacniData) 
+    });
+
+    const vysledek = await response.json();
+
+    if (!response.ok || !vysledek.uspech) {
+        ukazToast('Chyba', '', vysledek.chyba || 'Chyba instalace', 'var(--accent-red)', 'rgba(239, 68, 68, 0.6)');
+        if (loader) loader.classList.add('fade-out');
+        document.getElementById('wizard-view').style.display = 'flex'; // Zobrazíme průvodce znovu
+        return;
     }
-    
-    // Uložení výchozích hodnot nastavení terminálu
-    await fetch('/api/nastaveni', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ 'term_tapeta': 'dochazkac', 'term_sporic': '60', 'term_reset': '30', 'term_auto_odchod': 'true' }) });
+
+    // Instalace proběhla v pořádku, stáhneme do klienta nová data
     await nactiUzivateleZBackendu();
-  } catch (e) { console.error("Chyba při Průvodci:", e); }
+    if (typeof nactiNastaveniZBackendu === 'function') await nactiNastaveniZBackendu();
+  } catch (e) { 
+      console.error("Chyba při Průvodci:", e); 
+      ukazToast('Kritická chyba', '', 'Spojení selhalo.', 'var(--accent-red)', 'rgba(239, 68, 68, 0.6)');
+      return;
+  }
 
   localStorage.setItem('dochazkac_nastaveno', 'true');
   
   // 3. Po 5 sekundách ukážeme hotový terminál a přesměrujeme URL
   setTimeout(() => {
-    // Necháme animaci loaderu plynule zmizet
     if (loader) loader.classList.add('fade-out');
     
     document.body.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.55)), url('/static/obrazky/tapety/dochazkac.webp')`;

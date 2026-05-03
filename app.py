@@ -977,6 +977,71 @@ def tovarni_reset():
     nacti_data_z_db()
     return jsonify({"uspech": True})
 
+@aplikace.route('/api/setup/dokoncit', methods=['POST'])
+def dokonceni_setupu():
+    """Endpoint pro první spuštění (Průvodce). 
+    Funguje POUZE pokud je databáze zaměstnanců zcela prázdná."""
+    
+    conn = sqlite3.connect(DB_SOUBOR)
+    cursor = conn.cursor()
+    
+    try:
+        # Bezpečnostní pojistka: Opravdu je databáze prázdná?
+        cursor.execute("SELECT COUNT(*) FROM zamestnanci")
+        pocet = cursor.fetchone()[0]
+        if pocet > 0:
+            conn.close()
+            return jsonify({"uspech": False, "chyba": "Instalace zamítnuta: Systém už je nainstalován."}), 403
+        
+        # Načtení dat z requestu
+        data = request.get_json()
+        jmeno = data.get('jmeno')
+        pin = data.get('pin')
+        username = data.get('username')
+        heslo = data.get('heslo')
+        email = data.get('email', '')
+        
+        if not all([jmeno, pin, username, heslo]):
+            return jsonify({"uspech": False, "chyba": "Chybí povinná data (jméno, pin, username, heslo)."}), 400
+            
+        # Vložení prvního administrátora
+        pin_hash = generate_password_hash(pin)
+        heslo_hash = generate_password_hash(heslo)
+        
+        cursor.execute("""
+            INSERT INTO zamestnanci 
+            (jmeno, role, pin_hash, username, heslo_hash, email, hlaska_prichod, hlaska_odchod) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (jmeno, 'Administrator', pin_hash, username, heslo_hash, email, "Vítejte!", "Hezký zbytek dne."))
+        
+        # Vložení výchozích nastavení terminálu
+        vychozi_nastaveni = {
+            'term_tapeta': 'dochazkac',
+            'term_sporic': '60',
+            'term_reset': '30',
+            'term_auto_odchod': 'true'
+        }
+        
+        for klic, hodnota in vychozi_nastaveni.items():
+            cursor.execute("INSERT OR REPLACE INTO nastaveni (klic, hodnota) VALUES (?, ?)", (klic, str(hodnota)))
+            
+        conn.commit()
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Chyba při setupu: {e}")
+        return jsonify({"uspech": False, "chyba": "Chyba na straně serveru."}), 500
+    finally:
+        conn.close()
+        
+    # Přepíšeme paměťové struktury, aby systém okamžitě pracoval s novými daty
+    nacti_data_z_db()
+    
+    # Nahodíme adminovi rovnou platnou session, aby se mohl dostat do administrace
+    session['admin_prihlasen'] = True
+    
+    return jsonify({"uspech": True})
+
 @aplikace.route('/api/system/restart', methods=['POST'])
 @vyzaduj_admina
 def restart_systemu():
