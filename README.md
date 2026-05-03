@@ -114,7 +114,7 @@ Systém je koncipován tak, aby jeho zprovoznění bylo co nejjednodušší.
 
 1. Ujistěte se, že máte nainstalovaný Python 3.10+.
 
-2. Ve složce projektu vytvořte virtuální prostředí a aktivujte jej (zde pro Linux/Mac OS)
+2. Ve složce projektu vytvořte virtuální prostředí a aktivujte jej (zde pro Linux/Mac OS):
 
 ```bash
 source venv/bin/activate
