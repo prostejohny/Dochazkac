@@ -5,7 +5,7 @@
 ## Úvod a motivace
 Docházkáč 1.0 je komplexní hardwarově-softwarové řešení docházkového systému, vyvinuté primárně pro potřeby Základní školy ve Štětí (s budoucím plánovaným nasazením i na ZŠ v Mostě). 
 
-Při analýze trhu s docházkovými systémy pro školní prostředí byly zjištěny zásadní nedostatky komerčních řešení: vysoká pořizovací cena, nutnost platit pravidelné měsíční poplatky, absence české lokalizace, zastaralé uživatelské rozhraní a takřka nulová možnost přizpůsobení specifickým potřebám školy. Výsledkem této analýzy je vlastní systém, který je moderní, plně responzivní, navržený jako webová aplikace a nezávislý na drahém proprietárním hardwaru.
+Při pohledu na dostupné docházkové systémy pro školy se ukázalo, že většina z nich má dost nevýhod. Často jsou drahé, vyžadují pravidelné měsíční platby, nemají české prostředí, působí zastarale a nedají se moc přizpůsobit konkrétním potřebám školy. Na základě toho vznikl vlastní systém, který je moderní, funguje jako webová aplikace, dobře se používá na různých zařízeních a nevyžaduje žádný speciální nebo drahý hardware.
 
 ## Hardwarové řešení
 Díky webové architektuře je aplikace nezávislá na platformě, nicméně referenční hardwarový terminál byl sestaven z následujících komponent:
