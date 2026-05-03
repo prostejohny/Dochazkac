@@ -109,9 +109,12 @@ Systém je koncipován tak, aby jeho zprovoznění bylo co nejjednodušší.
 3.  Nainstalujte závislosti ze souboru:
     ```bash
     pip install -r requirements.txt
-    ```
+    
+```
 4.  Spusťte aplikační server:
     ```bash
     python app.py
     ```
-5.  Při zcela prvním spuštění (čistá databáze) systém automaticky přesměruje uživatele do průvodce nastavením (`/setup`), kde je vytvořen účet hlavního správce a nastavena základní konfigurace terminálu.
+5.  Otevřete webový prohlížeč a přejděte na adresu **`http://localhost:559`** nebo **`http://127.0.0.1:559`** (aplikace je pro zamezení kolizí s jinými službami nastavena na port 559).
+6.  Při zcela prvním spuštění (čistá databáze) systém automaticky přesměruje uživatele do průvodce nastavením (`/setup`), kde je vytvořen účet hlavního správce a nastavena základní konfigurace terminálu.
+```
