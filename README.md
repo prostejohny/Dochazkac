@@ -31,7 +31,7 @@ Tento soubor obsahuje plnohodnotné implementace vlastních datových kolekcí p
 *   **Vlastní algoritmy:** Nad zmíněnými kolekcemi jsou vystavěny vyhledávací a třídící algoritmy (např. vlastní implementace algoritmu *Insertion Sort* pro chronologické řazení záznamů).
 *   **Rozhraní a Iterátory:** Pro zajištění iterability vlastních kolekcí (např. použití v cyklech `for`) jsou implementovány iterátory postavené na generátorech (`yield`). Chování je sjednoceno definovaným rozhraním (`SpojovaStruktura`) za použití modulu `typing.Protocol`.
 
-### app.py (Aplikační logika a backend)
+### `app.py` (Aplikační logika a backend)
 Hlavní aplikační server propojuje vytvořené datové struktury s reálným backendem ve frameworku Flask. Obsluhuje REST API komunikaci s terminálem, trvalé uložení dat pomocí SQLite databáze a webové relace (sessions). Pomocí modulu `threading` je zde zajištěn i souběžný běh úloh na pozadí (např. automatické doplňování odchodů a periodické zálohování databáze). Ochrana systémových funkcí je pak řešena využitím vlastních bezpečnostních dekorátorů.
 
 ---
