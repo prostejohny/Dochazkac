@@ -17,20 +17,22 @@ Díky webové architektuře je aplikace nezávislá na platformě, nicméně ref
 
 ---
 
-## Architektura softwaru a mapování na sylabus předmětu
-Zdrojové kódy v jazyce Python jsou bohatě komentovány a rozděleny tak, aby plně demonstrovaly znalosti požadované v sylabu předmětu Algoritmizace a programování 2.
+## Architektura softwaru a aplikace teoretických znalostí
 
-### `tridy.py` (Objektový model a dědičnost)
-* **Bod 1, 12, 13:** Soubor obsahuje implementaci vlastních tříd, využití konstruktorů a metod. Je zde ukázkově využita dědičnost (Abstraktní základní třída `Osoba`, ze které dědí `Zamestnanec`, a z něj následně `Admin`). Demonstrace polymorfismu a efektivní recyklace kódu. Bezpečnost dat je zajištěna tím, že třídy pro zaměstnance uchovávají pouze hashe hesel, čipů a PINů (využití `werkzeug.security`).
+Architektura systému je navržena tak, aby v praxi ukazovala aplikaci probírané látky v předmětu Algoritmizace a programování 2. Klíčové datové struktury a algoritmy nebyly převzaty z vestavěných knihoven Pythonu, ale jsou implementovány zcela od základu jako vlastní řešení. Systém je modulárně rozdělen na následující části:
 
-### `struktury.py` (Vlastní datové struktury a algoritmy)
-* **Bod 2, 6, 7, 11:** Plnohodnotná implementace jednosměrného spojového seznamu (`HistorieDochazky`) sloužícího jako struktura pro ukládání logů (nové záznamy se vkládají na hlavu - časová složitost O(1)).
-* **Bod 3, 4, 5, 6, 8:** Implementace Binárního vyhledávacího stromu (`BSTUzivatelu`) pro rychlé vyhledávání a správu zaměstnanců. Součástí jsou vlastní vyhledávací a řadící algoritmy (např. vlastní implementace algoritmu *Insertion Sort* pro seřazení vyfiltrovaných záznamů podle času).
-* **Bod 10:** Využití modulu `typing.Protocol` pro definici rozhraní (`SpojovaStruktura`) a implementace iterátorů (`__iter__` využívající generátor `yield`), díky čemuž lze s vlastními strukturami pracovat pomocí standardních cyklů `for`.
+### `tridy.py` (Objektový model a praktické využití dědičnosti)
+Modul implementuje objektově orientovaný přístup pro modelování entit uživatelů. Je zde využita dědičnost – od abstraktní základní třídy `Osoba` dědí třída `Zamestnanec` (reprezentující uživatele s čipem/PINem) a z té následně vychází třída `Admin` (uživatel s rozšířenými přihlašovacími údaji pro administraci). Tento návrh eliminuje duplicitu kódu a demonstruje využití polymorfismu v praxi. Nedílnou součástí tříd je také zapouzdření a zabezpečení dat (např. ukládání otisků hesel a čipů).
 
-### `app.py` (Hlavní aplikační logika)
-* Srdce backendu napsané ve frameworku Flask. Zajišťuje REST API, vícevláknové zpracování (na pozadí běží vlákna pro automatické odhlašování a automatické zálohy SQLite databáze), práci s databází a správu webových relací (sessions). Obsahuje vlastní bezpečnostní dekorátory pro ochranu API koncových bodů.
+### `struktury.py` (Abstraktní datové typy a spojové struktury)
+Tento soubor obsahuje plnohodnotné implementace vlastních datových kolekcí podle teoretických paradigmat:
+*   **Spojový seznam:** Historie docházky je spravována pomocí jednosměrného spojového seznamu (`HistorieDochazky`). Vzhledem k potřebě častého vkládání nových logů na začátek (hlavu) seznamu jde o optimální strukturu s časovou složitostí O(1) pro tuto operaci.
+*   **Binární vyhledávací strom (BST):** Správa uživatelů a jejich rychlé dohledávání je řešeno vlastní strukturou `BSTUzivatelu`.
+*   **Vlastní algoritmy:** Nad zmíněnými kolekcemi jsou vystavěny vyhledávací a třídící algoritmy (např. vlastní implementace algoritmu *Insertion Sort* pro chronologické řazení záznamů).
+*   **Rozhraní a Iterátory:** Pro zajištění iterability vlastních kolekcí (např. použití v cyklech `for`) jsou implementovány iterátory postavené na generátorech (`yield`). Chování je sjednoceno definovaným rozhraním (`SpojovaStruktura`) za použití modulu `typing.Protocol`.
 
+### `app.py` (Aplikační logika a backend)
+Hlavní aplikační server propojuje vytvořené datové struktury s reálným backendem ve frameworku Flask. Obsluhuje REST API komunikaci s terminálem, trvalé uložení dat pomocí SQLite databáze a webové relace (sessions). Pomocí modulu `threading` je zde zajištěn i souběžný běh úloh na pozadí (např. automatické doplňování odchodů a periodické zálohování databáze). Ochrana systémových funkcí je pak řešena využitím vlastních bezpečnostních dekorátorů.
 ---
 
 ## Struktura projektu
