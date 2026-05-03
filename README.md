@@ -1,7 +1,3 @@
-Zde je návrh strukturovaného, profesionálního a detailního souboru `README.md`, který je připraven k přiložení k vaší semestrální práci. Text je psán akademickým, ale zároveň praktickým tónem, bez použití emotikonů, aby splňoval standardy vysokoškolského projektu a zároveň sloužil jako reálná dokumentace k softwaru.
-
-***
-
 # Semestrální práce: Docházkáč 1.0
 
 **Předmět:** Algoritmizace a programování 2
