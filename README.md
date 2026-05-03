@@ -82,7 +82,7 @@ Frontend aplikace je rozdělen do logických celků pro lepší udržitelnost:
 * **Harmonogram a spořič:** Terminál zobrazuje aktuální vyučovací hodinu nebo přestávku (konfigurovatelné). Po určité době nečinnosti přechází do tmavého režimu se spořičem obrazovky.
 
 ### Administrativní rozhraní
-Přístup do administrace je možný přímo z terminálu (kliknutím na ikonu a zadáním oprávněného PINu/čipu), nebo standardně přes prohlížeč zadáním adresy (např. `dochazka.zssteti-skolni.cz`). Webový přístup podléhá přihlášení jménem a heslem.
+Přístup do administrace je možný přímo z terminálu (kliknutím na ikonu a zadáním oprávněného PINu/čipu), nebo standardně přes prohlížeč zadáním adresy (např. `dochazka.zssteti-skolni.cz`). Přístup přes web je chráněný přihlášením pomocí uživatelského jména a hesla.
 Je využíván systém relací (sessions) s automatickým odhlášením při nečinnosti.
 
 **Hierarchie oprávnění (RBAC):**
