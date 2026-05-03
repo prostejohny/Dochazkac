@@ -25,7 +25,7 @@ Architektura systému je navržena tak, aby v praxi ukazovala aplikaci probíran
 Modul implementuje objektově orientovaný přístup pro modelování entit uživatelů. Je zde využita dědičnost – od abstraktní základní třídy `Osoba` dědí třída `Zamestnanec` (reprezentující uživatele s čipem/PINem) a z té následně vychází třída `Admin` (uživatel s rozšířenými přihlašovacími údaji pro administraci). Tento návrh eliminuje duplicitu kódu a demonstruje využití polymorfismu v praxi. Nedílnou součástí tříd je také zapouzdření a zabezpečení dat (např. ukládání otisků hesel a čipů).
 
 ### `struktury.py` (Abstraktní datové typy a spojové struktury)
-Tento soubor obsahuje plnohodnotné implementace vlastních datových kolekcí podle teoretických paradigmat:
+Tenhle soubor obsahuje vlastní implementace datových struktur vytvořených podle teoretických principů:
 *   **Spojový seznam:** Historie docházky je spravována pomocí jednosměrného spojového seznamu (`HistorieDochazky`). Vzhledem k potřebě častého vkládání nových logů na začátek (hlavu) seznamu jde o optimální strukturu s časovou složitostí O(1) pro tuto operaci.
 *   **Binární vyhledávací strom (BST):** Správa uživatelů a jejich rychlé dohledávání je řešeno vlastní strukturou `BSTUzivatelu`.
 *   **Vlastní algoritmy:** Nad zmíněnými kolekcemi jsou vystavěny vyhledávací a třídící algoritmy (např. vlastní implementace algoritmu *Insertion Sort* pro chronologické řazení záznamů).
