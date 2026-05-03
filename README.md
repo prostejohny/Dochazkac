@@ -111,7 +111,7 @@ Systém je koncipován tak, aby jeho zprovoznění bylo co nejjednodušší.
 
 2. Ve složce projektu vytvořte virtuální prostředí a aktivujte jej.
 
-3. Nainstalujte závislosti ze souboru:
+3. Nainstalujte požadované knihovny ze souboru:
 
 ```bash
 pip install -r requirements.txt
