@@ -8,7 +8,7 @@ Docházkáč 1.0 je komplexní hardwarově-softwarové řešení docházkového 
 Při pohledu na dostupné docházkové systémy pro školy se ukázalo, že většina z nich má dost nevýhod. Často jsou drahé, vyžadují pravidelné měsíční platby, nemají české prostředí, působí zastarale a nedají se moc přizpůsobit konkrétním potřebám školy. Na základě toho vznikl vlastní systém, který je moderní, funguje jako webová aplikace, dobře se používá na různých zařízeních a nevyžaduje žádný speciální nebo drahý hardware.
 
 ## Hardwarové řešení
-Díky webové architektuře je aplikace nezávislá na platformě, nicméně referenční hardwarový terminál byl sestaven z následujících komponent:
+Díky webové architektuře je aplikace plně nezávislá na konkrétní platformě. Pro účely implementace a testování však byl vytvořen referenční hardwarový terminál, který je sestaven z následujících komponent::
 * **Zobrazovač:** 10.1" dotykový displej Waveshare HMI (RPI-HMI-101D-ACCE-EU).
 * **Výpočetní jednotka:** Raspberry Pi 5 (4GB RAM) integrované v displeji.
 * **Napájení:** PoE (Power over Ethernet) ze stávající síťové infrastruktury (switch).
