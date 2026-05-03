@@ -114,9 +114,13 @@ Systém je koncipován tak, aby jeho zprovoznění bylo co nejjednodušší.
 
 1. Ujistěte se, že máte nainstalovaný Python 3.10+.
 
-2. Ve složce projektu vytvořte virtuální prostředí a aktivujte jej.
+2. Ve složce projektu vytvořte virtuální prostředí a aktivujte jej (zde pro Linux/Mac OS)
 
-3. Nainstalujte požadované knihovny ze souboru:
+```bash
+source venv/bin/activate
+```
+
+4. Nainstalujte požadované knihovny ze souboru:
 
 ```bash
 pip install -r requirements.txt
