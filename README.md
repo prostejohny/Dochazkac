@@ -94,6 +94,7 @@ Frontend aplikace je rozdělen do logických celků pro lepší udržitelnost:
 * **Identifikace:** Primárně pomocí RFID čipu. V případě zapomenutí čipu se lze přihlásit pomocí osobního 4místného PIN kódu přes virtuální klávesnici.
 * **Funkce "Vrátit zpět":** Pokud se zaměstnanec splete, interaktivní bublina mu nabízí dočasnou možnost svůj poslední záznam stornovat.
 * **Harmonogram a spořič:** Terminál zobrazuje aktuální vyučovací hodinu nebo přestávku (konfigurovatelné). Po určité době nečinnosti přechází do tmavého režimu se spořičem obrazovky.
+* **Vlastní toast hlášky:** Na žádost vedení školy je možné v systému definovat i vlastní texty pro toast notifikace (např. personalizované hlášky pro úspěšný příchod či odchod). Toto rozšíření bylo původně zamýšleno spíše „pro zpestření provozu“, ale ukázalo se jako oblíbená funkce při testování.
 
 ### Administrativní rozhraní
 Přístup do administrace je možný přímo z terminálu (kliknutím na ikonu a zadáním oprávněného PINu/čipu), nebo standardně přes prohlížeč zadáním adresy (např. `dochazka.zakladniskola.cz`). Přístup přes web je chráněný přihlášením pomocí uživatelského jména a hesla.
