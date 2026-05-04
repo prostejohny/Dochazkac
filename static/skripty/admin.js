@@ -22,9 +22,9 @@ function esc(str) {
  * Otevře administraci — skryje terminál, zobrazí admin panel.
  * 
  * Před zobrazením nastaví viditelnost záložek podle role přihlášeného správce:
- *   - Administrator / Reditel → plná práva (vidí vše)
- *   - Zastupce               → vidí Export a Správu, NEVIDÍ Nastavení
- *   - ostatní role           → vidí pouze Export
+ *   - Administrator / Reditel - plná práva (vidí vše)
+ *   - Zastupce               - vidí Export a Správu, NEVIDÍ Nastavení
+ *   - ostatní role           - vidí pouze Export
  * 
  * Poté stáhne čerstvá data ze serveru a vyčistí všechny filtry a formuláře,
  * aby administrace vždy začínala v čistém stavu.
@@ -121,9 +121,9 @@ async function otevriAdmin() {
 /**
  * Přepne aktivní záložku v administraci a vyčistí filtry záložky, ze které odcházíme.
  * 
- * Při odchodu ze Správy → vyčistí filtr zaměstnanců a formulář
- * Při odchodu z Exportu  → vyčistí filtry logů a admin logů
- * Při odchodu z Nastavení → přenačte nastavení ze serveru (zahodí neuložené změny)
+ * Při odchodu ze Správy - vyčistí filtr zaměstnanců a formulář
+ * Při odchodu z Exportu  - vyčistí filtry logů a admin logů
+ * Při odchodu z Nastavení - přenačte nastavení ze serveru (zahodí neuložené změny)
  * 
  * @param {string} idZalozky - ID elementu záložky (např. 'tab-export')
  * @param {HTMLElement} btn  - Tlačítko záložky, které se má označit jako aktivní
@@ -258,7 +258,7 @@ async function nactiAdminLogyZBackendu() {
  * 
  * Logika ochrany před přepsáním nezměněných hodnot:
  *   - Tečky (••••) v polích čipu/PINu znamenají, že uživatel hodnotu neměnil
- *     → pole se odešle jako prázdné, server stávající hash zachová
+ *     - pole se odešle jako prázdné, server stávající hash zachová
  *   - Pro nového zaměstnance jsou čip i PIN povinné
  * 
  * PIN se validuje regulárním výrazem — pouze číslice, max 4 znaky.
