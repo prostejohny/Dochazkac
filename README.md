@@ -1,6 +1,4 @@
-# Docházkáč 1.0 ([Ukázka zde](https://github.com/prostejohny/Dochazkac/tree/main/ukazkove_screenshoty_soubory)) **Předmět:** Algoritmizace a programování 2 tak to uprav ty
-
-**Předmět:** Algoritmizace a programování 2
+# Docházkáč 1.0 ([Ukázka zde](https://github.com/prostejohny/Dochazkac/tree/main/ukazkove_screenshoty_soubory))
 ## Úvod a motivace
 Docházkáč 1.0 je komplexní hardwarově-softwarové řešení docházkového systému, vyvinuté primárně pro potřeby Základní školy ve Štětí (s budoucím plánovaným nasazením i na ZŠ v Mostě). Během června proběhne testování odolnosti učiteli ZŠ, aby mohl být v září pro šk. rok 2026/2027 připraven a plně sloužit.
 
