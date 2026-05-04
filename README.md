@@ -10,12 +10,19 @@ Docházkáč 1.0 je komplexní hardwarově-softwarové řešení docházkového 
 Při pohledu na dostupné docházkové systémy pro školy se ukázalo, že většina z nich má dost nevýhod. Často jsou drahé, vyžadují pravidelné měsíční platby, nemají české prostředí, působí zastarale a nedají se moc přizpůsobit konkrétním potřebám školy. Na základě toho vznikl vlastní systém, který je moderní, funguje jako webová aplikace, dobře se používá na různých zařízeních a nevyžaduje žádný speciální nebo drahý hardware.
 
 ## Hardwarové řešení
-Díky webové architektuře je aplikace plně nezávislá na konkrétní platformě. Pro účely implementace a testování však byl vytvořen referenční hardwarový terminál, který je sestaven z následujících komponent::
+Díky webové architektuře je aplikace plně nezávislá na konkrétní platformě. Pro účely implementace a testování však byl vytvořen referenční hardwarový terminál, který je sestaven z následujících komponent:
 * **Zobrazovač:** 10.1" dotykový displej Waveshare HMI (RPI-HMI-101D-ACCE-EU).
 * **Výpočetní jednotka:** Raspberry Pi 5 (4GB RAM) integrované v displeji.
 * **Napájení:** PoE (Power over Ethernet) ze stávající síťové infrastruktury (switch).
 * **Periferie:** RFID čtečka (13.56 MHz) pracující v režimu emulace klávesnice. Tento standard byl zvolen pro zpětnou kompatibilitu se stávajícími čipy školní jídelny a budoucím napojením na tiskárny a elektronické zámky dveří.
 * **Hostování serveru:** Aplikace běží na školním NAS serveru v izolované síti (VLAN VEDENÍ), bez přímého přístupu do veřejné sítě internet.
+
+### Poznámka k návrhu architektury
+Původně bylo v plánu využít Raspberry Pi 5 i jako serverové řešení. S ohledem na jeho dlouhodobé zatížení, životnost a možné přehřívání jsem ale zvolil variantu nasazení na Synology NAS, kde je spuštěn Python server.
+
+Tímto se zároveň zvýšila stabilita systému a oddělila se výpočetní část terminálu od serverové logiky.
+
+Výhodou tohoto řešení je také jeho flexibilita – docházkový systém lze v praxi spustit a zobrazit na jakémkoliv zařízení s webovým prohlížečem (např. počítač, tablet nebo Android zařízení).
 
 ---
 
