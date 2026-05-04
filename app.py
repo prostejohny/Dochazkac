@@ -577,7 +577,7 @@ def uloz_uzivatele():
         
         conn.commit()
         
-        # --- CHIRURGICKÝ ZÁSAH DO PAMĚŤOVÉHO STROMU ---
+        # --- ZÁSAH DO PAMĚŤOVÉHO STROMU ---
         # Místo celého reloadu pouze vyměníme jeden uzel — rychlejší a bezpečnější
         if r:
             with _zamek_dat:
@@ -647,7 +647,7 @@ def uloz_admina():
 
         conn.commit()
 
-        # --- CHIRURGICKÝ ZÁSAH DO PAMĚŤOVÉHO STROMU ---
+        # --- ZÁSAH DO PAMĚŤOVÉHO STROMU ---
         if r:
             with _zamek_dat:
                 databaze_uzivatelu.smaz_uzivatele(jmeno)
@@ -704,7 +704,7 @@ def odeber_admina(u_id):
             conn.close()
             return jsonify({"uspech": False, "chyba": "Nelze odebrat práva! Jde o posledního správce v systému."}), 400
 
-        # Nullujeme administrátorské sloupce v DB
+        # Nulujeme administrátorské sloupce v DB
         cursor.execute("UPDATE zamestnanci SET username=NULL, email=NULL, heslo_hash=NULL WHERE id=?", (u_id,))
         
         # Načteme aktualizovaný řádek pro přestavbu objektu v BST
@@ -713,7 +713,7 @@ def odeber_admina(u_id):
 
         conn.commit()
 
-        # --- CHIRURGICKÝ ZÁSAH DO PAMĚŤOVÉHO STROMU ---
+        # --- ZÁSAH DO PAMĚŤOVÉHO STROMU ---
         # Z Admina se stává zpět běžný Zamestnanec
         if r:
             with _zamek_dat:
