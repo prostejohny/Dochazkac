@@ -3,7 +3,7 @@
 **Předmět:** Algoritmizace a programování 2
 
 ## Úvod a motivace
-Docházkáč 1.0 je komplexní hardwarově-softwarové řešení docházkového systému, vyvinuté primárně pro potřeby Základní školy ve Štětí (s budoucím plánovaným nasazením i na ZŠ v Mostě). 
+Docházkáč 1.0 je komplexní hardwarově-softwarové řešení docházkového systému, vyvinuté primárně pro potřeby Základní školy ve Štětí (s budoucím plánovaným nasazením i na ZŠ v Mostě). Během června proběhne testování odolnosti učiteli ZŠ, aby mohl být v září pro šk. rok 2026/2027 připraven a plně sloužit.
 
 Při pohledu na dostupné docházkové systémy pro školy se ukázalo, že většina z nich má dost nevýhod. Často jsou drahé, vyžadují pravidelné měsíční platby, nemají české prostředí, působí zastarale a nedají se moc přizpůsobit konkrétním potřebám školy. Na základě toho vznikl vlastní systém, který je moderní, funguje jako webová aplikace, dobře se používá na různých zařízeních a nevyžaduje žádný speciální nebo drahý hardware.
 
