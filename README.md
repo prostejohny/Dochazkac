@@ -97,7 +97,8 @@ Frontend aplikace je rozdělen do logických celků pro lepší udržitelnost:
 * **Vlastní toast hlášky:** Na žádost vedení školy je možné v systému definovat i vlastní texty pro toast notifikace (např. personalizované hlášky pro úspěšný příchod či odchod). Toto rozšíření bylo původně zamýšleno spíše „pro zpestření provozu“, ale ukázalo se jako oblíbená funkce při testování.
 
 ### Administrativní rozhraní
-Přístup do administrace je možný přímo z terminálu (kliknutím na ikonu a zadáním oprávněného PINu/čipu), nebo standardně přes prohlížeč zadáním adresy (např. `dochazka.zakladniskola.cz`). Přístup přes web je chráněný přihlášením pomocí uživatelského jména a hesla.
+Přístup do administrace je možný přímo z terminálu (kliknutím na ikonu a zadáním oprávněného PINu/čipu), nebo standardně přes prohlížeč zadáním adresy (např. `dochazka.zakladniskola.cz`). Po úpravě firewallu a nastavení DNS záznamu je tato doména směrována na interní server; v opačném případě je přístup možný také přímo přes IP adresu ve tvaru `NAS_IP:PORT`. Přístup přes web je chráněný přihlášením pomocí uživatelského jména a hesla.
+
 Je využíván systém relací (sessions) s automatickým odhlášením při nečinnosti.
 
 **Hierarchie oprávnění (RBAC):**
