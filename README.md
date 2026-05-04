@@ -1,12 +1,16 @@
-<p align="left">
-  <img src="static/obrazky/loga/dochazkac_logo.png" alt="Docházkáč logo" width="100">
-</p>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+  <div>
 
 # Docházkáč 1.0
 
 [Ukázka projektu](https://github.com/prostejohny/Dochazkac/tree/main/ukazkove_screenshoty_soubory)
 
 **Předmět:** Algoritmizace a programování 2
+
+  </div>
+
+  <img src="static/obrazky/loga/dochazkac_logo.png" alt="Logo" width="100">
+</div>
 
 ## Úvod a motivace
 Docházkáč 1.0 je komplexní hardwarově-softwarové řešení docházkového systému, vyvinuté primárně pro potřeby Základní školy ve Štětí (s budoucím plánovaným nasazením i na ZŠ v Mostě). Během června proběhne testování odolnosti učiteli ZŠ, aby mohl být v září pro šk. rok 2026/2027 připraven a plně sloužit.
