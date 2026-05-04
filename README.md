@@ -1,10 +1,4 @@
-<p align="left">
-  <img src="static/obrazky/loga/dochazkac_logo.png" alt="Docházkáč logo" width="100">
-</p>
-
-# Docházkáč 1.0
-
-[Ukázka projektu](https://github.com/prostejohny/Dochazkac/tree/main/ukazkove_screenshoty_soubory)
+# Docházkáč 1.0 ([Ukázka zde](https://github.com/prostejohny/Dochazkac/tree/main/ukazkove_screenshoty_soubory)) **Předmět:** Algoritmizace a programování 2 tak to uprav ty
 
 **Předmět:** Algoritmizace a programování 2
 ## Úvod a motivace
