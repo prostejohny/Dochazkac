@@ -371,10 +371,12 @@
         </div>
 
         <div class="nastaveni-blok">
-          <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+          <!-- 1. PŘIDÁNÍ ŠEDÉHO BOXU STEJNÉHO JAKO U EXPORTŮ -->
+          <div style="display: flex; gap: 20px; flex-wrap: wrap; background: rgba(0,0,0,0.02); padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05);">
             <div style="flex: 1; min-width: 250px;">
               <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Aktivní tapeta</label>
-              <div style="display: flex; gap: 10px;">
+              <!-- 2. PŘIDÁNÍ TŘÍDY mobile-stack -->
+              <div class="mobile-stack" style="display: flex; gap: 10px;">
                 <select id="set-tapeta" onchange="zmenitTapetu(this.value)" style="flex: 1; min-width: 0;">
                   <option value="dochazkac.webp">Výchozí (Docházkáč)</option>
                   <option value="skola.webp" selected>Fotografie (Budova školy)</option>
@@ -387,16 +389,19 @@
             
             <div style="flex: 1; min-width: 250px;">
               <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Nahrát novou tapetu</label>
-              <div style="display: flex; gap: 10px;">
+              <!-- 2. PŘIDÁNÍ TŘÍDY mobile-stack -->
+              <div class="mobile-stack" style="display: flex; gap: 10px;">
                 <input type="file" id="upload-tapeta-input" accept="image/jpeg, image/png, image/webp" style="flex: 1; min-width: 0; padding: 12px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; font-size: 0.95rem; color: var(--text-main);">
                 <button class="btn-tabulka btn-upravit" onclick="nahratTapetu()" style="padding: 0 20px; font-size: 1rem; border-radius: 12px; white-space: nowrap; flex-shrink: 0;">Nahrát</button>
               </div>
-              <div style="font-size: 0.75rem; color: var(--text-muted2); margin-top: 12px; padding-left: 5px;">Podporované: JPG, PNG, WEBP (Max. 2 MB | 1920x1080)</div>
+              <!-- 3. OPRAVA MARGINU U TEXTU (margin-top: 6px místo 12px) -->
+              <div style="font-size: 0.75rem; color: var(--text-muted2); margin-top: 6px; padding-left: 5px;">Podporované: JPG, PNG, WEBP (Max. 2 MB | 1920x1080)</div>
             </div>
           </div>
         </div>
 
-        <button class="btn-ulozit" style="width: 100%; margin-top: 5px;" onclick="ulozitNastaveni('terminal')">Uložit nastavení terminálu</button>
+        <!-- 4. OPRAVA MARGINU U TLAČÍTKA (margin-top: 15px místo 5px) -->
+        <button class="btn-ulozit" style="width: 100%; margin-top: 15px;" onclick="ulozitNastaveni('terminal')">Uložit nastavení terminálu</button>
 
         <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap;">
           <button class="btn-system btn-sys-blue" onclick="akceSystemu('restart')">
