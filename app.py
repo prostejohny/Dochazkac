@@ -3,7 +3,8 @@ import time
 import sys
 import sqlite3
 import os       
-import shutil   
+import shutil
+from contextlib import closing
 from datetime import datetime, timedelta
 from flask import Flask, render_template, jsonify, request, redirect, session
 from werkzeug.utils import secure_filename
@@ -54,128 +55,112 @@ def vyzaduj_admina(f):
 # =====================================================================
 
 def nacti_data_z_db():
-    """Načte všechna data z SQLite do globálních datových struktur v paměti.
-    
-    Provádí se při startu aplikace a po každé operaci, která mění data
-    (přidání/smazání zaměstnance apod.). Data se načítají nejprve do
-    dočasných struktur a teprve po úspěšném dokončení se atomicky
-    přepíší globální proměnné — zamezí se tak nekonzistentnímu stavu.
-    """
+    """Načte všechna data z SQLite do globálních datových struktur v paměti."""
     global databaze_uzivatelu, logy_dochazky 
     
-    # Dočasné struktury — plníme je, a až jsou hotové, přepíšeme globální
     nova_databaze = BSTUzivatelu() 
     nove_logy = HistorieDochazky() 
     pocet_nactenych_uzivatelu = 0
     
     try:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
-        
-        # --- 0. AUTOMATICKÉ VYTVOŘENÍ TABULEK (při prvním spuštění) ---
-        cursor.execute("CREATE TABLE IF NOT EXISTS nastaveni (klic TEXT PRIMARY KEY, hodnota TEXT)")
-        
-        cursor.execute('''CREATE TABLE IF NOT EXISTS zamestnanci (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            jmeno TEXT NOT NULL,
-                            role TEXT NOT NULL,
-                            cip_hash TEXT,
-                            pin_hash TEXT,
-                            email TEXT,
-                            username TEXT,
-                            heslo_hash TEXT,
-                            hlaska_prichod TEXT,
-                            hlaska_odchod TEXT
-                        )''')
-                        
-        cursor.execute('''CREATE TABLE IF NOT EXISTS logy (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            datum TEXT,
-                            cas TEXT,
-                            jmeno TEXT,
-                            akce TEXT,
-                            metoda TEXT
-                        )''')
-                        
-        cursor.execute('''CREATE TABLE IF NOT EXISTS admin_logy (
-                            id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            datum TEXT,
-                            cas TEXT,
-                            jmeno TEXT,
-                            metoda TEXT,
-                            uspesne INTEGER
-                        )''')
-        conn.commit()
-        
-        # --- 1. AUTOMATICKÁ GDPR ÚDRŽBA ---
-        # Před načtením dat smažeme záznamy starší než nastavená retenční lhůta
-        cursor.execute("SELECT hodnota FROM nastaveni WHERE klic='gdpr_retence'")
-        retence_row = cursor.fetchone()
-        retence = retence_row[0] if retence_row else "1rok"
-
-        if retence != "nikdy":
-            nyni = datetime.now()
-            if retence == "1rok":
-                mez = nyni - timedelta(days=365)
-            elif retence == "3roky":
-                mez = nyni - timedelta(days=3*365)
-            else:
-                mez = nyni - timedelta(days=365)
-
-            str_mez = mez.strftime("%Y-%m-%d")
-            cursor.execute("DELETE FROM logy WHERE datum < ?", (str_mez,))
-            cursor.execute("DELETE FROM admin_logy WHERE datum < ?", (str_mez,)) 
-            conn.commit()
-
-        # --- 2. NAČTENÍ ZAMĚSTNANCŮ DO DOČASNÉ STRUKTURY ---
-        # Hashe čipů/PINů/hesel přiřazujeme přímo — obejdeme tím validaci
-        # v konstruktoru, která očekává čistý text, ne hash.
-        try:
-            cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci")
-            radky = cursor.fetchall()
-            
-            for r in radky:
-                if r[7]:  # Přítomnost heslo_hash → jde o Admina
-                    osoba = Admin(
-                        id_osoby=r[0], jmeno=r[1], role=r[2], 
-                        cip=None, pin=None,   # Nepředáváme čistý text — hash nastavíme ručně níže
-                        email=r[5], username=r[6], heslo=None, 
-                        hlaska_prichod=r[8], hlaska_odchod=r[9]
-                    )
-                    osoba.cip_hash = r[3]
-                    osoba.pin_hash = r[4]
-                    osoba.heslo_hash = r[7]
-                else:  # Bez heslo_hash → běžný zaměstnanec
-                    osoba = Zamestnanec(
-                        id_osoby=r[0], jmeno=r[1], role=r[2], 
-                        cip=None, pin=None, 
-                        hlaska_prichod=r[8], hlaska_odchod=r[9]
-                    )
-                    osoba.cip_hash = r[3]
-                    osoba.pin_hash = r[4]
+        # Přidání kontextového manažeru pro spojení a transakci
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: 
+                cursor = conn.cursor()
                 
-                nova_databaze.vloz(osoba)
-                pocet_nactenych_uzivatelu += 1
+                # --- 0. AUTOMATICKÉ VYTVOŘENÍ TABULEK ---
+                cursor.execute("CREATE TABLE IF NOT EXISTS nastaveni (klic TEXT PRIMARY KEY, hodnota TEXT)")
                 
-        except Exception as ez:
-            print(f"Chyba u načítání konkrétních uživatelů: {ez}")
+                cursor.execute('''CREATE TABLE IF NOT EXISTS zamestnanci (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    jmeno TEXT NOT NULL,
+                                    role TEXT NOT NULL,
+                                    cip_hash TEXT,
+                                    pin_hash TEXT,
+                                    email TEXT,
+                                    username TEXT,
+                                    heslo_hash TEXT,
+                                    hlaska_prichod TEXT,
+                                    hlaska_odchod TEXT
+                                )''')
+                                
+                cursor.execute('''CREATE TABLE IF NOT EXISTS logy (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    datum TEXT,
+                                    cas TEXT,
+                                    jmeno TEXT,
+                                    akce TEXT,
+                                    metoda TEXT
+                                )''')
+                                
+                cursor.execute('''CREATE TABLE IF NOT EXISTS admin_logy (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    datum TEXT,
+                                    cas TEXT,
+                                    jmeno TEXT,
+                                    metoda TEXT,
+                                    uspesne INTEGER
+                                )''')
+                
+                # --- 1. AUTOMATICKÁ GDPR ÚDRŽBA ---
+                cursor.execute("SELECT hodnota FROM nastaveni WHERE klic='gdpr_retence'")
+                retence_row = cursor.fetchone()
+                retence = retence_row[0] if retence_row else "1rok"
 
-        # --- 3. NAČTENÍ LOGŮ DO DOČASNÉ STRUKTURY ---
-        # Řadíme ASC (od nejstaršího) — HistorieDochazky vkládá na hlavu,
-        # takže na konci bude hlava obsahovat nejnovější záznam.
-        cursor.execute("SELECT id, datum, cas, jmeno, akce, metoda FROM logy ORDER BY datum ASC, cas ASC")
-        for log in cursor.fetchall():
-            nove_logy.pridej_zaznam(log[0], log[1], log[2], log[3], log[4], log[5])
+                if retence != "nikdy":
+                    nyni = datetime.now()
+                    if retence == "1rok":
+                        mez = nyni - timedelta(days=365)
+                    elif retence == "3roky":
+                        mez = nyni - timedelta(days=3*365)
+                    else:
+                        mez = nyni - timedelta(days=365)
 
-        conn.close()
+                    str_mez = mez.strftime("%Y-%m-%d")
+                    cursor.execute("DELETE FROM logy WHERE datum < ?", (str_mez,))
+                    cursor.execute("DELETE FROM admin_logy WHERE datum < ?", (str_mez,)) 
+
+                # --- 2. NAČTENÍ ZAMĚSTNANCŮ DO DOČASNÉ STRUKTURY ---
+                try:
+                    cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci")
+                    radky = cursor.fetchall()
+                    
+                    for r in radky:
+                        if r[7]:  
+                            osoba = Admin(
+                                id_osoby=r[0], jmeno=r[1], role=r[2], 
+                                cip=None, pin=None,   
+                                email=r[5], username=r[6], heslo=None, 
+                                hlaska_prichod=r[8], hlaska_odchod=r[9]
+                            )
+                            osoba.cip_hash = r[3]
+                            osoba.pin_hash = r[4]
+                            osoba.heslo_hash = r[7]
+                        else:  
+                            osoba = Zamestnanec(
+                                id_osoby=r[0], jmeno=r[1], role=r[2], 
+                                cip=None, pin=None, 
+                                hlaska_prichod=r[8], hlaska_odchod=r[9]
+                            )
+                            osoba.cip_hash = r[3]
+                            osoba.pin_hash = r[4]
+                        
+                        nova_databaze.vloz(osoba)
+                        pocet_nactenych_uzivatelu += 1
+                        
+                except Exception as ez:
+                    print(f"Chyba u načítání konkrétních uživatelů: {ez}")
+
+                # --- 3. NAČTENÍ LOGŮ DO DOČASNÉ STRUKTURY ---
+                cursor.execute("SELECT id, datum, cas, jmeno, akce, metoda FROM logy ORDER BY datum ASC, cas ASC")
+                for log in cursor.fetchall():
+                    nove_logy.pridej_zaznam(log[0], log[1], log[2], log[3], log[4], log[5])
 
         # --- 4. BEZPEČNÝ PŘEPIS GLOBÁLNÍ PAMĚTI ---
-        # Zámek zajistí, že žádné vlákno nečte data právě ve chvíli, kdy je přepisujeme
         with _zamek_dat:
             databaze_uzivatelu = nova_databaze
             logy_dochazky = nove_logy
             
-        # Výpis pouze v hlavním pracovním procesu (Flask debug spouští dva procesy)
         if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
             print("\n" + "="*50)
             print(f"[START SYSTÉMU] Databáze úspěšně načtena!")
@@ -196,39 +181,33 @@ nacti_data_z_db()
 # =====================================================================
 
 def proved_automaticke_odhlaseni():
-    """Vygeneruje chybějící odchody pro zaměstnance, kteří zapomněli pípnout.
-    
-    Pro každého, kdo má jako poslední záznam předchozích dnů 'Příchod',
-    přidá automatický 'Odchod' v čase 23:59:59. Lze vypnout v nastavení.
-    """
+    """Vygeneruje chybějící odchody pro zaměstnance, kteří zapomněli pípnout."""
     dneska = datetime.now().strftime("%Y-%m-%d")
     chybejici = logy_dochazky.najdi_chybejici_odchody(dneska)
 
     if chybejici:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
-        
-        # Zkontrolujeme, zda má admin funkci automatického odhlašování zapnutou
-        cursor.execute("SELECT hodnota FROM nastaveni WHERE klic='term_auto_odchod'")
-        nastaveni = cursor.fetchone()
-        if nastaveni and nastaveni[0] == 'false':
-            conn.close()
-            return 
-        
-        for clovek in chybejici:
-            str_cas = "23:59:59"
-            cursor.execute(
-                "INSERT INTO logy (id, datum, cas, jmeno, akce, metoda) VALUES (?, ?, ?, ?, ?, ?)",
-                (None, clovek['datum'], str_cas, clovek['jmeno'], 'Odchod', 'Systém (Auto)')
-            )
-        
-        conn.commit()
-        conn.close()
+        # Použití kontextových manažerů
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: # Zajistí commit
+                cursor = conn.cursor()
+                
+                cursor.execute("SELECT hodnota FROM nastaveni WHERE klic='term_auto_odchod'")
+                nastaveni = cursor.fetchone()
+                
+                # Pokud je vypnuto, jednoduše vyskočíme (spojení se zavře samo)
+                if nastaveni and nastaveni[0] == 'false':
+                    return 
+                
+                for clovek in chybejici:
+                    str_cas = "23:59:59"
+                    cursor.execute(
+                        "INSERT INTO logy (id, datum, cas, jmeno, akce, metoda) VALUES (?, ?, ?, ?, ?, ?)",
+                        (None, clovek['datum'], str_cas, clovek['jmeno'], 'Odchod', 'Systém (Auto)')
+                    )
         
         # Znovu načteme data, aby se nové záznamy propsaly do paměti
         nacti_data_z_db() 
         print(f"Byly vygenerovány automatické odchody pro: {[c['jmeno'] for c in chybejici]}")
-
 def vlakno_pro_odhlasovani():
     """Smyčka vlákna — každou minutu spustí kontrolu chybějících odchodů."""
     while True:
@@ -259,15 +238,13 @@ def automaticke_ulohy():
         time.sleep(60)
 
 def proved_automaticke_zalohy(nyni):
-    """Zkopíruje databázový soubor do složky zalohy_databaze, pokud je záloha zapnutá.
+    """Zkopíruje databázový soubor do složky zalohy_databaze, pokud je záloha zapnutá."""
     
-    Frekvenci zálohy (denně / týdně / měsíčně) čte z tabulky nastavení.
-    """
-    conn = sqlite3.connect(DB_SOUBOR)
-    cursor = conn.cursor()
-    cursor.execute("SELECT klic, hodnota FROM nastaveni")
-    nastaveni = dict(cursor.fetchall())
-    conn.close()
+    # Pouze čteme z DB, transakční blok není nutný
+    with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT klic, hodnota FROM nastaveni")
+        nastaveni = dict(cursor.fetchall())
 
     zapnuto_db = nastaveni.get('zaloha_db_zapnuto', 'false') == 'true'
     frekvence = nastaveni.get('zaloha_frekvence', 'denne')
@@ -307,14 +284,14 @@ def loguj_systemovou_akci(metoda, uspesne):
     """Zapíše systémovou událost (záloha, chyba...) do tabulky admin_logy."""
     nyni = datetime.now()
     try:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO admin_logy (datum, cas, jmeno, metoda, uspesne) VALUES (?, ?, ?, ?, ?)",
-            (nyni.strftime("%Y-%m-%d"), nyni.strftime("%H:%M:%S"), "Systém (Auto)", metoda, uspesne)
-        )
-        conn.commit()
-        conn.close()
+        # Přidán kontextový manažer pro spojení a transakci
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO admin_logy (datum, cas, jmeno, metoda, uspesne) VALUES (?, ?, ?, ?, ?)",
+                    (nyni.strftime("%Y-%m-%d"), nyni.strftime("%H:%M:%S"), "Systém (Auto)", metoda, uspesne)
+                )
     except Exception as e:
         print(f"Nelze zapsat do logu: {e}")
 
@@ -326,17 +303,16 @@ def loguj_systemovou_akci(metoda, uspesne):
 @aplikace.route('/')
 def hlavni_stranka():
     """Hlavní stránka terminálu. Pokud není žádný zaměstnanec, přesměruje na setup."""
-    conn = sqlite3.connect(DB_SOUBOR)
-    cursor = conn.cursor()
     try:
-        cursor.execute("SELECT COUNT(*) FROM zamestnanci")
-        pocet = cursor.fetchone()[0]
+        # Zde pouze čteme, stačí jeden with blok pro bezpečné zavření
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM zamestnanci")
+            pocet = cursor.fetchone()[0]
     except sqlite3.OperationalError:
         # Tabulka ještě neexistuje (první spuštění) — vytvoříme ji
         pocet = 0 
         nacti_data_z_db()
-    finally:
-        conn.close()
     
     if pocet == 0:
         return redirect('/setup')
@@ -347,16 +323,14 @@ def hlavni_stranka():
 @aplikace.route('/setup')
 def setup_stranka():
     """Průvodce prvním nastavením. Pokud už existují zaměstnanci, vrátí na hlavní stránku."""
-    conn = sqlite3.connect(DB_SOUBOR)
-    cursor = conn.cursor()
     try:
-        cursor.execute("SELECT COUNT(*) FROM zamestnanci")
-        pocet = cursor.fetchone()[0]
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM zamestnanci")
+            pocet = cursor.fetchone()[0]
     except sqlite3.OperationalError:
         pocet = 0 
         nacti_data_z_db()
-    finally:
-        conn.close()
     
     if pocet > 0:
         return redirect('/') 
@@ -437,15 +411,7 @@ def admin_logout():
 
 @aplikace.route('/api/overit', methods=['POST'])
 def overit_pripnuti():
-    """Ověří čip nebo PIN a zapíše záznam docházky.
-    
-    Logika kontroly duplicit:
-      - Příchod nelze zapsat dvakrát za sebou
-      - Odchod/Lékař/Pauza vyžadují předchozí Příchod
-    
-    Pokud se ověřuje admin (přes terminál), nahodí mu platnou session
-    pro případné otevření administrace bez nutnosti zadávat webové heslo.
-    """
+    """Ověří čip nebo PIN a zapíše záznam docházky."""
     data = request.get_json()
     kod, typ, akce = data.get('kod'), data.get('typ'), data.get('akce')
 
@@ -473,14 +439,13 @@ def overit_pripnuti():
             str_cas = time.strftime("%H:%M:%S", nyni)
             nazev_metody = 'Čip' if typ == 'cip' else 'PIN' if typ == 'pin' else typ.capitalize()
 
-            # Zapíšeme do databáze a získáme vygenerované ID záznamu
-            conn = sqlite3.connect(DB_SOUBOR)
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO logy (id, datum, cas, jmeno, akce, metoda) VALUES (?, ?, ?, ?, ?, ?)",
-                           (None, str_datum, str_cas, u.jmeno, akce, nazev_metody))
-            vygenerovane_id = cursor.lastrowid
-            conn.commit()
-            conn.close()
+            # ZDE JE ÚPRAVA: Zapíšeme do databáze a získáme vygenerované ID záznamu
+            with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+                with conn:
+                    cursor = conn.cursor()
+                    cursor.execute("INSERT INTO logy (id, datum, cas, jmeno, akce, metoda) VALUES (?, ?, ?, ?, ?, ?)",
+                                   (None, str_datum, str_cas, u.jmeno, akce, nazev_metody))
+                    vygenerovane_id = cursor.lastrowid
 
             # Zapíšeme i do paměťové struktury, aby byl stav okamžitě konzistentní
             with _zamek_dat:
@@ -495,8 +460,7 @@ def overit_pripnuti():
             "je_admin": hasattr(u, 'heslo_hash') and bool(u.heslo_hash)
         }
         
-        # Pokud se přihlašuje admin nebo privilegovaná role přes terminál,
-        # nahodíme mu session — bude moci otevřít administraci bez webového hesla
+        # Pokud se přihlašuje admin nebo privilegovaná role přes terminál, nahodíme session
         if odpoved["je_admin"] or u.role in ['Administrator', 'Reditel', 'Zastupce']:
             session['admin_prihlasen'] = True
 
@@ -515,12 +479,6 @@ def overit_pripnuti():
 @aplikace.route('/api/uzivatele/ulozit', methods=['POST'])
 @vyzaduj_admina
 def uloz_uzivatele():
-    """Uloží nového zaměstnance nebo aktualizuje existujícího.
-    
-    Před uložením zkontroluje duplicity jména, PINu a čipu.
-    Po uložení do DB provede 'chirurgický zásah' do paměťového BST —
-    smaže starý uzel a vloží aktualizovaný, bez nutnosti celého reloadu.
-    """
     data = request.get_json()
     u_id = data.get('id')
     jmeno = data.get('jmeno')
@@ -530,67 +488,60 @@ def uloz_uzivatele():
     hl_p = data.get('hlaska_prichod', '')
     hl_o = data.get('hlaska_odchod', '')
 
-    # Kontrola duplicit vůči všem ostatním zaměstnancům (editovaného přeskočíme)
     with _zamek_dat:
         vsichni_uzivatele = databaze_uzivatelu.ziskej_serazene()
     
     for u in vsichni_uzivatele:
         if u_id and u.id == u_id:
-            continue  # Editujeme tohoto — přeskočíme porovnání sám se sebou
+            continue  
         if u.jmeno.lower() == jmeno.lower():
             return jsonify({"uspech": False, "chyba": f"Zaměstnanec se jménem '{jmeno}' již existuje!"}), 400
-        # Tečky v hodnotě znamenají, že uživatel pole nezměnil — neověřujeme
         if pin and "•" not in pin and u.over_pin(pin):
             return jsonify({"uspech": False, "chyba": "Tento PIN již používá jiný zaměstnanec!"}), 400
         if cip and "•" not in cip and u.over_cip(cip):
             return jsonify({"uspech": False, "chyba": "Tento čip již používá jiný zaměstnanec!"}), 400
 
     try:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
-        
-        # Zjistíme staré jméno — potřebujeme ho pro smazání starého uzlu ze stromu
-        stare_jmeno = None
-        if u_id:
-            cursor.execute("SELECT jmeno FROM zamestnanci WHERE id=?", (u_id,))
-            stary_zaznam = cursor.fetchone()
-            if stary_zaznam:
-                stare_jmeno = stary_zaznam[0]
-        
-        # Uložení do databáze — UPDATE pro existující, INSERT pro nového
-        if u_id:
-            cursor.execute("UPDATE zamestnanci SET jmeno=?, role=?, hlaska_prichod=?, hlaska_odchod=? WHERE id=?", (jmeno, role, hl_p, hl_o, u_id))
-            if pin and "•" not in pin: 
-                cursor.execute("UPDATE zamestnanci SET pin_hash=? WHERE id=?", (generate_password_hash(pin), u_id))
-            if cip and "•" not in cip: 
-                cursor.execute("UPDATE zamestnanci SET cip_hash=? WHERE id=?", (generate_password_hash(cip), u_id))
-            id_pro_strom = u_id
-        else:
-            cip_h = generate_password_hash(cip) if cip else None
-            pin_h = generate_password_hash(pin) if pin else None
-            cursor.execute("INSERT INTO zamestnanci (jmeno, role, cip_hash, pin_hash, hlaska_prichod, hlaska_odchod) VALUES (?, ?, ?, ?, ?, ?)", (jmeno, role, cip_h, pin_h, hl_p, hl_o))
-            id_pro_strom = cursor.lastrowid
-        
-        # Načteme finální podobu řádku pro sestavení objektu do paměti
-        cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci WHERE id=?", (id_pro_strom,))
-        r = cursor.fetchone()
-        
-        conn.commit()
-        
+        # POUŽITÍ KONTEXTOVÉHO MANAŽERU
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: # Automatický commit nebo rollback
+                cursor = conn.cursor()
+                
+                stare_jmeno = None
+                if u_id:
+                    cursor.execute("SELECT jmeno FROM zamestnanci WHERE id=?", (u_id,))
+                    stary_zaznam = cursor.fetchone()
+                    if stary_zaznam:
+                        stare_jmeno = stary_zaznam[0]
+                
+                if u_id:
+                    cursor.execute("UPDATE zamestnanci SET jmeno=?, role=?, hlaska_prichod=?, hlaska_odchod=? WHERE id=?", (jmeno, role, hl_p, hl_o, u_id))
+                    if pin and "•" not in pin: 
+                        cursor.execute("UPDATE zamestnanci SET pin_hash=? WHERE id=?", (generate_password_hash(pin), u_id))
+                    if cip and "•" not in cip: 
+                        cursor.execute("UPDATE zamestnanci SET cip_hash=? WHERE id=?", (generate_password_hash(cip), u_id))
+                    id_pro_strom = u_id
+                else:
+                    cip_h = generate_password_hash(cip) if cip else None
+                    pin_h = generate_password_hash(pin) if pin else None
+                    cursor.execute("INSERT INTO zamestnanci (jmeno, role, cip_hash, pin_hash, hlaska_prichod, hlaska_odchod) VALUES (?, ?, ?, ?, ?, ?)", (jmeno, role, cip_h, pin_h, hl_p, hl_o))
+                    id_pro_strom = cursor.lastrowid
+                
+                cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci WHERE id=?", (id_pro_strom,))
+                r = cursor.fetchone()
+
         # --- ZÁSAH DO PAMĚŤOVÉHO STROMU ---
-        # Místo celého reloadu pouze vyměníme jeden uzel — rychlejší a bezpečnější
         if r:
             with _zamek_dat:
                 if stare_jmeno:
                     databaze_uzivatelu.smaz_uzivatele(stare_jmeno)
                 
-                # Sestavíme správný typ objektu podle přítomnosti heslo_hash
-                if r[7]:  # Administrátor
+                if r[7]: 
                     osoba = Admin(id_osoby=r[0], jmeno=r[1], role=r[2], cip=None, pin=None, email=r[5], username=r[6], heslo=None, hlaska_prichod=r[8], hlaska_odchod=r[9])
                     osoba.cip_hash = r[3]
                     osoba.pin_hash = r[4]
                     osoba.heslo_hash = r[7]
-                else:      # Běžný zaměstnanec
+                else:      
                     osoba = Zamestnanec(id_osoby=r[0], jmeno=r[1], role=r[2], cip=None, pin=None, hlaska_prichod=r[8], hlaska_odchod=r[9])
                     osoba.cip_hash = r[3]
                     osoba.pin_hash = r[4]
@@ -599,20 +550,14 @@ def uloz_uzivatele():
                 
     except sqlite3.Error as e:
         return jsonify({"uspech": False, "chyba": "Chyba databáze: " + str(e)}), 500
-    finally:
-        if 'conn' in locals() and conn:
-            conn.close()
 
+    # Blok finally a ruční conn.close() zcela zmizely
     return jsonify({"uspech": True})
 
 @aplikace.route('/api/admin/ulozit', methods=['POST'])
 @vyzaduj_admina
 def uloz_admina():
-    """Nastaví nebo aktualizuje webové přihlašovací údaje zaměstnance (email, username, heslo).
-    
-    Pokud není heslo zadáno, zachová stávající hash. Po uložení
-    provede chirurgický zásah do BST stejně jako uloz_uzivatele.
-    """
+    """Nastaví nebo aktualizuje webové přihlašovací údaje zaměstnance."""
     data = request.get_json()
     u_id = data.get('id')
     username = data.get('username')
@@ -623,36 +568,34 @@ def uloz_admina():
         return jsonify({"uspech": False, "chyba": "Chybí ID uživatele"}), 400
         
     try:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
+        # Přidání kontextového manažeru
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: # Automatický commit nebo rollback
+                cursor = conn.cursor()
 
-        # Zjistíme jméno pro smazání starého uzlu ze stromu
-        cursor.execute("SELECT jmeno FROM zamestnanci WHERE id=?", (u_id,))
-        zaznam = cursor.fetchone()
-        if not zaznam:
-            return jsonify({"uspech": False, "chyba": "Uživatel nenalezen"}), 404
-        jmeno = zaznam[0]
-        
-        if heslo:
-            cursor.execute("UPDATE zamestnanci SET username = ?, email = ?, heslo_hash = ? WHERE id = ?", 
-                           (username, email, generate_password_hash(heslo), u_id))
-        else:
-            # Heslo nezadáno — zachováme stávající hash
-            cursor.execute("UPDATE zamestnanci SET username = ?, email = ? WHERE id = ?", 
-                           (username, email, u_id))
-            
-        # Načteme aktualizovaný řádek pro sestavení nového objektu do stromu
-        cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci WHERE id=?", (u_id,))
-        r = cursor.fetchone()
-
-        conn.commit()
+                cursor.execute("SELECT jmeno FROM zamestnanci WHERE id=?", (u_id,))
+                zaznam = cursor.fetchone()
+                
+                # Zde se dříve spojení nezavíralo správně při brzkém návratu. Nyní je to bezpečné.
+                if not zaznam:
+                    return jsonify({"uspech": False, "chyba": "Uživatel nenalezen"}), 404
+                jmeno = zaznam[0]
+                
+                if heslo:
+                    cursor.execute("UPDATE zamestnanci SET username = ?, email = ?, heslo_hash = ? WHERE id = ?", 
+                                   (username, email, generate_password_hash(heslo), u_id))
+                else:
+                    cursor.execute("UPDATE zamestnanci SET username = ?, email = ? WHERE id = ?", 
+                                   (username, email, u_id))
+                    
+                cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci WHERE id=?", (u_id,))
+                r = cursor.fetchone()
 
         # --- ZÁSAH DO PAMĚŤOVÉHO STROMU ---
         if r:
             with _zamek_dat:
                 databaze_uzivatelu.smaz_uzivatele(jmeno)
                 
-                # Rozlišíme, zda jde o Admina nebo běžného zaměstnance
                 if r[7]: 
                     osoba = Admin(id_osoby=r[0], jmeno=r[1], role=r[2], cip=None, pin=None, email=r[5], username=r[6], heslo=None, hlaska_prichod=r[8], hlaska_odchod=r[9])
                     osoba.cip_hash = r[3]
@@ -667,54 +610,39 @@ def uloz_admina():
 
     except sqlite3.Error as e:
         return jsonify({"uspech": False, "chyba": "Chyba databáze: " + str(e)}), 500
-    finally:
-        if 'conn' in locals() and conn:
-            conn.close()
             
     return jsonify({"uspech": True})
 
 @aplikace.route('/api/admin/odebrat/<int:u_id>', methods=['DELETE'])
 @vyzaduj_admina
 def odeber_admina(u_id):
-    """Odebere zaměstnanci administrátorská práva (smaže heslo_hash, email, username).
-    
-    Zaměstnanec zůstane v systému jako běžný uživatel — jen přijde
-    o možnost přihlásit se do webové administrace. Nelze odebrat
-    práva poslednímu správci v systému.
-    """
     try:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: # Řeší transakci
+                cursor = conn.cursor()
 
-        cursor.execute("SELECT COUNT(*) FROM zamestnanci WHERE heslo_hash IS NOT NULL")
-        pocet_adminu = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM zamestnanci WHERE heslo_hash IS NOT NULL")
+                pocet_adminu = cursor.fetchone()[0]
 
-        cursor.execute("SELECT heslo_hash, jmeno FROM zamestnanci WHERE id=?", (u_id,))
-        odebirany = cursor.fetchone()
+                cursor.execute("SELECT heslo_hash, jmeno FROM zamestnanci WHERE id=?", (u_id,))
+                odebirany = cursor.fetchone()
 
-        if not odebirany:
-            conn.close()
-            return jsonify({"uspech": False, "chyba": "Uživatel nenalezen."}), 404
+                # Všimněte si: Před return už nemusí být conn.close()
+                if not odebirany:
+                    return jsonify({"uspech": False, "chyba": "Uživatel nenalezen."}), 404
 
-        heslo_hash = odebirany[0]
-        jmeno = odebirany[1]
+                heslo_hash = odebirany[0]
+                jmeno = odebirany[1]
 
-        # Ochrana: nelze odebrat práva poslednímu správci
-        if heslo_hash and pocet_adminu <= 1:
-            conn.close()
-            return jsonify({"uspech": False, "chyba": "Nelze odebrat práva! Jde o posledního správce v systému."}), 400
+                if heslo_hash and pocet_adminu <= 1:
+                    return jsonify({"uspech": False, "chyba": "Nelze odebrat práva! Jde o posledního správce v systému."}), 400
 
-        # Nulujeme administrátorské sloupce v DB
-        cursor.execute("UPDATE zamestnanci SET username=NULL, email=NULL, heslo_hash=NULL WHERE id=?", (u_id,))
-        
-        # Načteme aktualizovaný řádek pro přestavbu objektu v BST
-        cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci WHERE id=?", (u_id,))
-        r = cursor.fetchone()
+                cursor.execute("UPDATE zamestnanci SET username=NULL, email=NULL, heslo_hash=NULL WHERE id=?", (u_id,))
+                
+                cursor.execute("SELECT id, jmeno, role, cip_hash, pin_hash, email, username, heslo_hash, hlaska_prichod, hlaska_odchod FROM zamestnanci WHERE id=?", (u_id,))
+                r = cursor.fetchone()
 
-        conn.commit()
-
-        # --- ZÁSAH DO PAMĚŤOVÉHO STROMU ---
-        # Z Admina se stává zpět běžný Zamestnanec
+        # ZÁSAH DO PAMĚŤOVÉHO STROMU
         if r:
             with _zamek_dat:
                 databaze_uzivatelu.smaz_uzivatele(jmeno)
@@ -725,48 +653,35 @@ def odeber_admina(u_id):
 
     except sqlite3.Error as e:
         return jsonify({"uspech": False, "chyba": "Chyba databáze: " + str(e)}), 500
-    finally:
-        if 'conn' in locals() and conn:
-            conn.close()
             
     return jsonify({"uspech": True})
 
 @aplikace.route('/api/uzivatele/smazat/<int:id_smazat>', methods=['DELETE'])
 @vyzaduj_admina
 def smaz_uzivatele(id_smazat):
-    """Trvale smaže zaměstnance z databáze i z paměťového BST.
+    """Trvale smaže zaměstnance z databáze i z paměťového BST."""
+    with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+        with conn: # Automatický commit při úspěchu
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT COUNT(*) FROM zamestnanci WHERE heslo_hash IS NOT NULL")
+            pocet_adminu = cursor.fetchone()[0]
+
+            cursor.execute("SELECT jmeno, heslo_hash FROM zamestnanci WHERE id=?", (id_smazat,))
+            mazany_uzivatel = cursor.fetchone()
+
+            if not mazany_uzivatel:
+                return jsonify({"uspech": False, "chyba": "Uživatel nenalezen."}), 404
+
+            jmeno_smazaneho = mazany_uzivatel[0]
+            heslo_hash = mazany_uzivatel[1]
+
+            if heslo_hash and pocet_adminu <= 1:
+                return jsonify({"uspech": False, "chyba": "Nelze smazat posledního správce systému!"}), 400
+
+            cursor.execute("DELETE FROM zamestnanci WHERE id=?", (id_smazat,))
     
-    Nelze smazat posledního správce systému. Jméno zjistíme PŘED
-    smazáním z DB — po DELETE bychom ho už nezjistili.
-    """
-    conn = sqlite3.connect(DB_SOUBOR)
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT COUNT(*) FROM zamestnanci WHERE heslo_hash IS NOT NULL")
-    pocet_adminu = cursor.fetchone()[0]
-
-    # Jméno musíme znát před smazáním — potřebujeme ho pro BST
-    cursor.execute("SELECT jmeno, heslo_hash FROM zamestnanci WHERE id=?", (id_smazat,))
-    mazany_uzivatel = cursor.fetchone()
-
-    if not mazany_uzivatel:
-        conn.close()
-        return jsonify({"uspech": False, "chyba": "Uživatel nenalezen."}), 404
-
-    jmeno_smazaneho = mazany_uzivatel[0]
-    heslo_hash = mazany_uzivatel[1]
-
-    # Ochrana: nelze smazat posledního správce
-    if heslo_hash and pocet_adminu <= 1:
-        conn.close()
-        return jsonify({"uspech": False, "chyba": "Nelze smazat posledního správce systému!"}), 400
-
-    # 1. Smazání z databáze SQLite
-    cursor.execute("DELETE FROM zamestnanci WHERE id=?", (id_smazat,))
-    conn.commit()
-    conn.close()
-    
-    # 2. Smazání uzlu přímo z BST v paměti — bez nutnosti celého reloadu
+    # Smazání uzlu přímo z BST v paměti
     with _zamek_dat:
         databaze_uzivatelu.smaz_uzivatele(jmeno_smazaneho)
         
@@ -779,17 +694,9 @@ def smaz_uzivatele(id_smazat):
 
 @aplikace.route('/api/admin/logy', methods=['GET', 'POST'])
 def sprava_admin_logu():
-    """Správa logů přístupů do administrace.
-    
-    GET  — vrátí historii přístupů (seřazenou vlastním algoritmem), vyžaduje přihlášení.
-    POST — zapíše nový záznam přístupu (volá ho frontend po každém přihlášení/pokusu).
-           POST je záměrně veřejný — frontend ho volá ještě před nastavením session.
-    """
+    """Správa logů přístupů do administrace."""
     if request.method == 'GET' and not session.get('admin_prihlasen'):
         return jsonify({"uspech": False, "chyba": "Neautorizováno"}), 401
-
-    conn = sqlite3.connect(DB_SOUBOR)
-    cursor = conn.cursor()
 
     if request.method == 'POST':
         novy_log = request.get_json()
@@ -803,19 +710,22 @@ def sprava_admin_logu():
         else:
             print(f"\n[ADMIN ZAMÍTNUTO] Neoprávněný pokus o přístup! Zadáno: '{jmeno_log}' (Způsob: {metoda_log})\n")
         
-        cursor.execute(
-            "INSERT INTO admin_logy (datum, cas, jmeno, metoda, uspesne) VALUES (?, ?, ?, ?, ?)",
-            (novy_log.get('datumKratke'), novy_log.get('cas'), novy_log.get('jmeno'), novy_log.get('metoda'), uspesne_int)
-        )
-        conn.commit()
-        conn.close()
+        # Zápis dat přes kontextový manažer
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO admin_logy (datum, cas, jmeno, metoda, uspesne) VALUES (?, ?, ?, ?, ?)",
+                    (novy_log.get('datumKratke'), novy_log.get('cas'), novy_log.get('jmeno'), novy_log.get('metoda'), uspesne_int)
+                )
         return jsonify({"uspech": True})
         
     else:
-        # Řazení provádí vlastní Insertion Sort, ne SQL — využití algoritmu ze struktury
-        cursor.execute("SELECT id, datum, cas, jmeno, metoda, uspesne FROM admin_logy")
-        radky = cursor.fetchall()
-        conn.close()
+        # Pouhé čtení dat - nepotřebujeme transakční vnořený `with conn:`
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, datum, cas, jmeno, metoda, uspesne FROM admin_logy")
+            radky = cursor.fetchall()
 
         vysledek = []
         for r in radky:
@@ -853,12 +763,12 @@ def smaz_log(id_zaznamu):
     """Smaže jeden záznam docházky z paměti i z databáze (funkce 'Vrátit zpět')."""
     uspech = logy_dochazky.smaz_zaznam(id_zaznamu)
     if uspech:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM logy WHERE id=?", (id_zaznamu,))
-        conn.commit()
-        conn.close()
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: # Potvrzení změn (commit)
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM logy WHERE id=?", (id_zaznamu,))
         return jsonify({"uspech": True})
+        
     return jsonify({"uspech": False, "chyba": "Záznam nebyl nalezen."}), 404
 
 
@@ -868,33 +778,29 @@ def smaz_log(id_zaznamu):
 
 @aplikace.route('/api/nastaveni', methods=['GET', 'POST'])
 def sprava_nastaveni():
-    """Čtení a ukládání nastavení systému (klíč-hodnota v tabulce nastaveni).
-    
-    GET  — veřejné (terminál potřebuje tapetu a rozvrh i bez přihlášení).
-    POST — chráněné, vyžaduje přihlášeného správce.
-    """
+    """Čtení a ukládání nastavení systému (klíč-hodnota v tabulce nastaveni)."""
     if request.method == 'POST':
         if not session.get('admin_prihlasen'):
             return jsonify({"uspech": False, "chyba": "Neautorizovaný přístup. Přihlaste se."}), 401
             
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
         data = request.get_json()
         
-        # INSERT OR REPLACE zajistí, že existující klíče se přepíší, nové se přidají
-        for klic, hodnota in data.items():
-            cursor.execute("INSERT OR REPLACE INTO nastaveni (klic, hodnota) VALUES (?, ?)", (klic, str(hodnota)))
+        # Zápis do DB pomocí kontextového manažeru a transakce
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: # Zajistí hromadný commit po proběhnutí for cyklu
+                cursor = conn.cursor()
+                for klic, hodnota in data.items():
+                    cursor.execute("INSERT OR REPLACE INTO nastaveni (klic, hodnota) VALUES (?, ?)", (klic, str(hodnota)))
         
-        conn.commit()
-        conn.close()
         return jsonify({"uspech": True})
         
     else:
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
-        cursor.execute("SELECT klic, hodnota FROM nastaveni")
-        radky = cursor.fetchall()
-        conn.close()
+        # Pouhé čtení - stačí jen closing pro bezpečné zavření spojení
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT klic, hodnota FROM nastaveni")
+            radky = cursor.fetchall()
+            
         return jsonify({r[0]: r[1] for r in radky})
 
 
@@ -905,10 +811,7 @@ def sprava_nastaveni():
 @aplikace.route('/api/zalohovat', methods=['POST'])
 @vyzaduj_admina
 def zalohovat_db():
-    """Manuálně zkopíruje databázový soubor do složky zalohy_databaze.
-    
-    Název souboru obsahuje datum a čas zálohy. Akci zaznamená do admin_logy.
-    """
+    """Manuálně zkopíruje databázový soubor do složky zalohy_databaze."""
     try:
         data = request.get_json(silent=True) or {}
         jmeno_admina = data.get('jmeno', 'Neznámý správce')
@@ -925,14 +828,14 @@ def zalohovat_db():
         
         print(f"\n[SYSTÉM] Správce '{jmeno_admina}' manuálně zazálohoval databázi do souboru: '{nazev_souboru}'\n")
         
-        conn = sqlite3.connect(DB_SOUBOR)
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO admin_logy (datum, cas, jmeno, metoda, uspesne) VALUES (?, ?, ?, ?, ?)",
-            (nyni.strftime("%Y-%m-%d"), nyni.strftime("%H:%M:%S"), jmeno_admina, f"Manuální záloha: {nazev_souboru}", 1)
-        )
-        conn.commit()
-        conn.close()
+        # Otevření spojení jen na nutnou dobu pro zápis logu
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO admin_logy (datum, cas, jmeno, metoda, uspesne) VALUES (?, ?, ?, ?, ?)",
+                    (nyni.strftime("%Y-%m-%d"), nyni.strftime("%H:%M:%S"), jmeno_admina, f"Manuální záloha: {nazev_souboru}", 1)
+                )
         
         return jsonify({"uspech": True})
     except Exception as e:
@@ -941,17 +844,11 @@ def zalohovat_db():
 
 @aplikace.route('/api/tovarni_reset', methods=['POST'])
 def tovarni_reset():
-    """Smaže veškerá data ze všech tabulek (tovární reset).
-    
-    Vyžaduje ověřovací slovo 'RESTARTOVAT' a platné heslo správce.
-    Záměrně nepoužívá @vyzaduj_admina — je použitelný i po odhlášení.
-    """
+    """Smaže veškerá data ze všech tabulek (tovární reset)."""
     data = request.get_json()
-    # Pojistka: uživatel musí napsat přesně "RESTARTOVAT"
     if data.get('potvrzeni') != "RESTARTOVAT":
         return jsonify({"uspech": False, "chyba": "Chybí ověřovací slovo RESTARTOVAT"}), 400
 
-    # Ověříme heslo správce inline (bez session)
     serazeni = databaze_uzivatelu.ziskej_serazene()
     je_opravnen = any(
         u.over_heslo(data.get('heslo', '')) 
@@ -963,17 +860,13 @@ def tovarni_reset():
     if not je_opravnen:
         return jsonify({"uspech": False, "chyba": "Nesprávné přihlašovací údaje správce"}), 401
     
-    conn = sqlite3.connect(DB_SOUBOR)
-    cursor = conn.cursor()
+    # Vyčištění tabulek s automatickým limitem chyb (rollback) a commit
+    with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+        with conn:
+            cursor = conn.cursor()
+            for tabulka in ["zamestnanci", "logy", "nastaveni", "admin_logy"]: 
+                cursor.execute(f"DELETE FROM {tabulka}")
     
-    # Smažeme obsah všech tabulek (strukturu zachováme)
-    for tabulka in ["zamestnanci", "logy", "nastaveni", "admin_logy"]: 
-        cursor.execute(f"DELETE FROM {tabulka}")
-        
-    conn.commit()
-    conn.close()
-    
-    # Znovu načteme data — struktury budou prázdné, systém přesměruje na /setup
     nacti_data_z_db()
     return jsonify({"uspech": True})
 
@@ -982,57 +875,56 @@ def dokonceni_setupu():
     """Endpoint pro první spuštění (Průvodce). 
     Funguje POUZE pokud je databáze zaměstnanců zcela prázdná."""
     
-    conn = sqlite3.connect(DB_SOUBOR)
-    cursor = conn.cursor()
-    
     try:
-        # Bezpečnostní pojistka: Opravdu je databáze prázdná?
-        cursor.execute("SELECT COUNT(*) FROM zamestnanci")
-        pocet = cursor.fetchone()[0]
-        if pocet > 0:
-            conn.close()
-            return jsonify({"uspech": False, "chyba": "Instalace zamítnuta: Systém už je nainstalován."}), 403
-        
-        # Načtení dat z requestu
-        data = request.get_json()
-        jmeno = data.get('jmeno')
-        pin = data.get('pin')
-        username = data.get('username')
-        heslo = data.get('heslo')
-        email = data.get('email', '')
-        
-        if not all([jmeno, pin, username, heslo]):
-            return jsonify({"uspech": False, "chyba": "Chybí povinná data (jméno, pin, username, heslo)."}), 400
-            
-        # Vložení prvního administrátora
-        pin_hash = generate_password_hash(pin)
-        heslo_hash = generate_password_hash(heslo)
-        
-        cursor.execute("""
-            INSERT INTO zamestnanci 
-            (jmeno, role, pin_hash, username, heslo_hash, email, hlaska_prichod, hlaska_odchod) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (jmeno, 'Administrator', pin_hash, username, heslo_hash, email, "Vítejte!", "Hezký zbytek dne."))
-        
-        # Vložení výchozích nastavení terminálu
-        vychozi_nastaveni = {
-            'term_tapeta': 'dochazkac',
-            'term_sporic': '60',
-            'term_reset': '30',
-            'term_auto_odchod': 'true'
-        }
-        
-        for klic, hodnota in vychozi_nastaveni.items():
-            cursor.execute("INSERT OR REPLACE INTO nastaveni (klic, hodnota) VALUES (?, ?)", (klic, str(hodnota)))
-            
-        conn.commit()
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            with conn: # Automatický commit/rollback
+                cursor = conn.cursor()
+                
+                # Bezpečnostní pojistka, zda je opravdu prázdná
+                cursor.execute("SELECT COUNT(*) FROM zamestnanci")
+                pocet = cursor.fetchone()[0]
+                if pocet > 0:
+                    # Už se nemusíš starat o conn.close(), 'with closing' to vyřeší samo
+                    return jsonify({"uspech": False, "chyba": "Instalace zamítnuta: Systém už je nainstalován."}), 403
+                
+                # Načtení dat z requestu
+                data = request.get_json()
+                jmeno = data.get('jmeno')
+                pin = data.get('pin')
+                username = data.get('username')
+                heslo = data.get('heslo')
+                email = data.get('email', '')
+                
+                if not all([jmeno, pin, username, heslo]):
+                    return jsonify({"uspech": False, "chyba": "Chybí povinná data (jméno, pin, username, heslo)."}), 400
+                    
+                # Vložení prvního administrátora
+                pin_hash = generate_password_hash(pin)
+                heslo_hash = generate_password_hash(heslo)
+                
+                cursor.execute("""
+                    INSERT INTO zamestnanci 
+                    (jmeno, role, pin_hash, username, heslo_hash, email, hlaska_prichod, hlaska_odchod) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (jmeno, 'Administrator', pin_hash, username, heslo_hash, email, "Vítejte!", "Hezký zbytek dne."))
+                
+                # Vložení výchozích nastavení terminálu
+                vychozi_nastaveni = {
+                    'term_tapeta': 'dochazkac',
+                    'term_sporic': '60',
+                    'term_reset': '30',
+                    'term_auto_odchod': 'true'
+                }
+                
+                for klic, hodnota in vychozi_nastaveni.items():
+                    cursor.execute("INSERT OR REPLACE INTO nastaveni (klic, hodnota) VALUES (?, ?)", (klic, str(hodnota)))
+                
+                # conn.commit() už zde být nemusí, vnitřní 'with conn:' to udělá za tebe
         
     except Exception as e:
-        conn.rollback()
+        # conn.rollback() už zde být nemusí
         print(f"Chyba při setupu: {e}")
         return jsonify({"uspech": False, "chyba": "Chyba na straně serveru."}), 500
-    finally:
-        conn.close()
         
     # Přepíšeme paměťové struktury, aby systém okamžitě pracoval s novými daty
     nacti_data_z_db()
