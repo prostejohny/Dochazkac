@@ -1897,6 +1897,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const isAdmin = urlParams.get('admin') === 'true' || window.location.pathname === '/admin';
   const loader = document.getElementById('admin-loader');
 
+  // OPRAVA: Naslouchač kliknutí přesunut sem, aby fungoval v celém systému (včetně terminálu)
+  document.addEventListener('click', obnovAdminRelaci);
+
   // --- 1. LOGIKA PRO PŘIHLÁŠENÍ DO ADMINISTRACE ---
   if (isAdmin) {
     document.body.classList.add('pure-admin-mode'); 
@@ -1912,9 +1915,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (typeof sporicTimer !== 'undefined') clearTimeout(sporicTimer); 
     if (typeof skrytSporic === 'function') skrytSporic(); 
 
-    // Při každém kliknutí prodloužíme platnost relace
-    document.addEventListener('click', obnovAdminRelaci);
-    
     // Krátká prodleva pro dokončení načítání dat z DOMContentLoaded v data.js
     setTimeout(() => {
         const ulozenaSess = localStorage.getItem('adminSess');
@@ -1938,7 +1938,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (loader) loader.classList.add('fade-out');
         
     }, 1200); 
-  } 
+  }
   // --- 2. LOGIKA PRO KLASICKÝ TERMINÁL DOCHÁZKY ---
   else if (!isSetup) {
     
