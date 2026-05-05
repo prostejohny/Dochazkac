@@ -1097,20 +1097,60 @@ async function ulozitNastaveni(sekce) {
     zprava = 'Pravidla pro uchovávání dat (GDPR) uložena.';
     
   } else if (sekce === 'rozvrh') {
-    // Rozvrh vyučovacích hodin — načteme z DOM tabulky a převedeme na minuty
     aktivniRozvrh = [];
-    document.querySelectorAll('#rozvrh-body tr').forEach(radek => {
+    let nalezenaChyba = false; // Pojistka pro zastavení ukládání
+
+    // Vytáhneme všechny řádky z tabulky
+    const radky = document.querySelectorAll('#rozvrh-body tr');
+    
+    for (let radek of radky) {
         const nazev = radek.querySelector('td:nth-child(1) input').value; 
         const odCas = radek.querySelector('td:nth-child(2) input').value; 
         const doCas = radek.querySelector('td:nth-child(3) input').value;
+        const selectTyp = radek.querySelector('td:nth-child(4) select');
+        const typ = selectTyp ? selectTyp.value : 'hodina';
+
         if (odCas && doCas) { 
             const [hOd, mOd] = odCas.split(':').map(Number); 
             const [hDo, mDo] = doCas.split(':').map(Number); 
-            aktivniRozvrh.push({ nazev: nazev, odMin: hOd * 60 + mOd, doMin: hDo * 60 + mDo, text: nazev }); 
+            const odMin = hOd * 60 + mOd;
+            const doMin = hDo * 60 + mDo;
+
+            // 1. KONTROLA LOGIKY ČASU (Konec nesmí být před začátkem)
+            if (doMin <= odMin) {
+                ukazToast('Chyba zadání', '', `Úsek "${nazev}" má nesmyslný čas.`, 'var(--accent-red)', 'rgba(239, 68, 68, 0.6)');
+                nalezenaChyba = true;
+                break; // Zastavíme procházení
+            }
+
+            // 2. KONTROLA KŘÍŽENÍ (Zda nový čas nezasahuje do už schválených)
+            // K překryvu dochází, pokud (NovýZačátek < StarýKonec) A ZÁROVEŇ (NovýKonec > StarýZačátek)
+            const kolize = aktivniRozvrh.find(exist => (odMin < exist.doMin && doMin > exist.odMin));
+            
+            if (kolize) {
+                ukazToast('Chyba: Křížení časů', '', `"${nazev}" se překrývá s "${kolize.nazev}"!`, 'var(--accent-red)', 'rgba(239, 68, 68, 0.6)');
+                nalezenaChyba = true;
+                break; // Zastavíme procházení
+            }
+
+            aktivniRozvrh.push({ 
+                nazev: nazev, 
+                odMin: odMin, 
+                doMin: doMin, 
+                text: nazev,
+                odCas: odCas,
+                doCas: doCas,
+                typ: typ
+            }); 
         }
-    });
+    }
+
+    // Pokud jsme našli chybu, funkci předčasně ukončíme -> nic se na server nepošle!
+    if (nalezenaChyba) return; 
+
     dataKodeslani = { 'rozvrh_data': JSON.stringify(aktivniRozvrh) };
-    // Pracovní dny — ze zaškrtnutých checkboxů sestavíme pole čísel dnů
+    
+    // Pracovní dny... (zbytek zůstává stejný)
     pracovniDny = Array.from(document.querySelectorAll('.pracovni-dny-grid input:checked')).map(cb => parseInt(cb.value));
     dataKodeslani['rozvrh_dny'] = JSON.stringify(pracovniDny);
     aktualizujVyucovaciHodinu(); 

@@ -340,6 +340,19 @@ def setup_stranka():
 @aplikace.route('/admin')
 def admin_stranka():
     """Vyhrazená URL pro administraci — vrací stejný index.html, JS se postará o zbytek."""
+    # PŘIDÁNO: Ochrana před přístupem do administrace před dokončením setupu
+    try:
+        with closing(sqlite3.connect(DB_SOUBOR)) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM zamestnanci")
+            pocet = cursor.fetchone()[0]
+    except sqlite3.OperationalError:
+        # Tabulka ještě neexistuje
+        pocet = 0 
+    
+    if pocet == 0:
+        return redirect('/setup')
+        
     return render_template('index.html')
 
 

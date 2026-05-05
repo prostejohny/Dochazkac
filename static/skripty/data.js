@@ -177,8 +177,14 @@ async function nactiNastaveniZBackendu() {
         
         // --- Terminál — tapeta a automatický odchod ---
         if (data['term_tapeta']) {
-            document.getElementById('set-tapeta').value = data['term_tapeta'];
-            zmenitTapetu(data['term_tapeta'], false); // false = bez animace při načtení
+            let tapeta = data['term_tapeta'];
+    
+            
+            if (tapeta === 'dochazkac') tapeta = 'dochazkac.webp';
+            if (tapeta === 'skola') tapeta = 'skola.webp';
+    
+            document.getElementById('set-tapeta').value = tapeta;
+            zmenitTapetu(tapeta, false); // false = bez animace při načtení
         }
         
         if (data['term_auto_odchod']) {
@@ -189,6 +195,33 @@ async function nactiNastaveniZBackendu() {
         if (data['rozvrh_data']) {
             aktivniRozvrh = JSON.parse(data['rozvrh_data']);
             aktualizujVyucovaciHodinu(); // Okamžitě zobrazíme správnou hodinu
+            
+            // PŘIDÁNO: Dynamické překreslení tabulky rozvrhu v Administraci
+            const tbodyRozvrh = document.getElementById('rozvrh-body');
+            if (tbodyRozvrh) {
+                tbodyRozvrh.innerHTML = '';
+                aktivniRozvrh.forEach(h => {
+                    const tr = document.createElement('tr');
+                    const isHodina = h.typ !== 'pauza' ? 'selected' : '';
+                    const isPauza = h.typ === 'pauza' ? 'selected' : '';
+                    
+                    tr.innerHTML = `
+                        <td><input type="text" value="${h.nazev || ''}"></td>
+                        <td><input type="time" value="${h.odCas || ''}"></td>
+                        <td><input type="time" value="${h.doCas || ''}"></td>
+                        <td style="text-align: center;">
+                            <select style="padding: 6px; width: 100%;">
+                                <option value="hodina" ${isHodina}>Hodina</option>
+                                <option value="pauza" ${isPauza}>Přestávka</option>
+                            </select>
+                        </td>
+                        <td style="text-align: center;">
+                            <button class="btn-tabulka btn-smazat" onclick="this.closest('tr').remove()" style="padding: 6px 12px; font-size: 0.8rem;" title="Odstranit úsek">✕</button>
+                        </td>
+                    `;
+                    tbodyRozvrh.appendChild(tr);
+                });
+            }
         }
 
         // Pracovní dny — zaškrtneme i checkboxy v administraci, aby odpovídaly realitě
