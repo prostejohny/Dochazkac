@@ -10,7 +10,6 @@
 </head>
 <body>
 
-<!-- TENTO BLOK SEM VLOŽ -->
 <div id="admin-loader" style="display: none;">
   <div class="admin-loader-content">
     <div class="logo-ring">
@@ -19,10 +18,8 @@
     <div class="admin-loader-text">Ověřuji přístup...</div>
   </div>
 </div>
-<!-- KONEC VLOŽENÉHO BLOKU -->
 
 <div id="screensaver" onclick="skrytSporic()">
-...
   <div class="screensaver-content">
     <div id="screensaver-time">00:00</div>
     <div class="screensaver-text">Stisknutím nebo pípnutím probudíte</div>
@@ -91,18 +88,14 @@
       </svg>
       Odhlásit se
     </button>
-  </div> <!-- ZDE CHYBĚL TENTO UZAVÍRACÍ TAG -->
+  </div>
 
-  <!-- NAVIGAČNÍ TLAČÍTKA -->
   <div class="admin-tabs">
     <button class="tab-btn active" onclick="prepniZalozku('tab-export',this)">Export a logy</button>
     <button class="tab-btn" onclick="prepniZalozku('tab-sprava',this)">Správa zaměstnanců</button>
     <button class="tab-btn" onclick="prepniZalozku('tab-admini',this)">Nastavení</button>
   </div>
-
-  <!-- NÁSLEDUJE SKUTEČNÝ OBSAH ZÁLOŽEK -->
   
-  <!-- ZÁLOŽKA 1: EXPORT (Pouze jednou!) -->
   <div id="tab-export" class="tab-obsah">
     <div class="admin-card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -128,8 +121,6 @@
           <button onclick="stahnoutXLSX()" class="btn-csv">↓ Stáhnout XLSX</button>
         </div>
       </div>
-      
-      <!-- Následuje zbytek tvé tabulky a další kód -->
 
       <table>
         <thead><tr><th>Datum a Čas</th><th>Zaměstnanec</th><th>Akce</th></tr></thead>
@@ -146,7 +137,6 @@
         </h3>
       </div>
       
-      <!-- PŘIDANÁ FILTRACE A EXPORT PRO ADMIN LOGY -->
       <div class="filtr-lista">
         <div class="filtr-skupina" style="flex: 0.5;">
           <label>Datum Od:</label>
@@ -204,7 +194,6 @@
     <div class="admin-card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
         <h3 style="margin: 0;">Seznam registrovaných zaměstnanců</h3>
-        <!-- NOVÉ: Vyhledávací pole -->
         <input type="search" id="hledat-zamestnance" placeholder="Hledat zaměstnance..." oninput="filtrujZamestnance()" style="max-width: 300px; padding: 10px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1);">
       </div>
       
@@ -213,11 +202,9 @@
         <tbody id="tabulka-uzivatelu"></tbody>
       </table>
       
-      <!-- ... (zde končí tabulka a stránkování uživatelů) ... -->
       <div id="strankovani-uzivatelu" class="strankovani-ovladani"></div>
-    </div> <!-- Tady končí druhá karta -->
+    </div> 
 
-    <!-- KARTA: EXPORT ZAMĚSTNANCŮ -->
     <div class="admin-card" style="margin-top: 25px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
         <div style="flex: 1; min-width: 250px;">
@@ -233,7 +220,7 @@
       </div>
     </div>
 
-  </div> <!-- Zde končí celý id="tab-sprava" -->
+  </div> 
 
   <div id="tab-admini" class="tab-obsah" style="display: none;">
     <div class="settings-grid">
@@ -326,7 +313,6 @@
       </div>
 
 
-      <!-- KARTA: VZHLED EXPORTŮ A LOGA -->
       <div class="admin-card" style="grid-column: 1 / -1;">
         <h3 style="margin-bottom: 20px;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:text-bottom; margin-right:5px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> 
@@ -335,11 +321,9 @@
         <p style="font-size: 0.9rem; color: var(--text-muted2); margin-bottom: 20px;">Zvolte si logo, které se bude automaticky vkládat do záhlaví při stahování výpisů docházky (XLSX).</p>
         
         <div style="display: flex; gap: 20px; flex-wrap: wrap; background: rgba(0,0,0,0.02); padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05);">
-            <!-- Levá část: Výběr loga -->
             <div style="flex: 1; min-width: 250px;">
               <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Aktivní logo (Záhlaví tabulky)</label>
               <div class="mobile-stack" style="display: flex; gap: 10px;">
-              <!-- ODEBRÁNO onchange -->
               <select id="set-logo" style="flex: 1; min-width: 0;">
                 <option value="dochazkac_logo.png" selected>Výchozí (Docházkáč)</option>
               </select>
@@ -349,7 +333,6 @@
             </div>
           </div>
     
-          <!-- Pravá část: Nahrávání -->
           <div style="flex: 1; min-width: 250px;">
             <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Nahrát vlastní logo</label>
             <div class="mobile-stack" style="display: flex; gap: 10px;">
@@ -360,7 +343,6 @@
           </div>
       </div>
         
-        <!-- NOVÉ TLAČÍTKO ULOŽIT -->
         <button class="btn-ulozit" style="width: 100%; margin-top: 15px;" onclick="ulozitNastaveni('export')">Uložit vzhled exportů</button>
       </div>
 
@@ -368,7 +350,6 @@
       <div class="admin-card" style="grid-column: 1 / -1;">
         <h3 style="margin-bottom: 25px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg> Chování terminálu</h3>
         
-        <!-- BLOK 1: Časování a automatizace -->
         <div class="nastaveni-blok">
           <div class="form-grid">
             <div class="filtr-skupina">
@@ -389,10 +370,8 @@
           </div>
         </div>
 
-        <!-- BLOK 2: Vzhled terminálu -->
         <div class="nastaveni-blok">
           <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <!-- Levá část: Výběr tapety -->
             <div style="flex: 1; min-width: 250px;">
               <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Aktivní tapeta</label>
               <div style="display: flex; gap: 10px;">
@@ -400,18 +379,15 @@
                   <option value="dochazkac.webp">Výchozí (Docházkáč)</option>
                   <option value="skola.webp" selected>Fotografie (Budova školy)</option>
                 </select>
-                <!-- ZMĚNA: Tlačítko pro smazání s profi SVG ikonkou místo emoji -->
                 <button class="btn-tabulka btn-smazat" onclick="smazatTapetu()" style="width: 52px; height: 52px; display: flex; justify-content: center; align-items: center; padding: 0; border-radius: 12px; flex-shrink: 0;" title="Smazat tapetu">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
               </div>
             </div>
             
-            <!-- Pravá část: Nahrávání -->
             <div style="flex: 1; min-width: 250px;">
               <label style="display: block; font-size: 0.85rem; color: var(--text-muted2); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Nahrát novou tapetu</label>
               <div style="display: flex; gap: 10px;">
-                <!-- ZMĚNA: Samostatný input a samostatné tlačítko -->
                 <input type="file" id="upload-tapeta-input" accept="image/jpeg, image/png, image/webp" style="flex: 1; min-width: 0; padding: 12px; background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; font-size: 0.95rem; color: var(--text-main);">
                 <button class="btn-tabulka btn-upravit" onclick="nahratTapetu()" style="padding: 0 20px; font-size: 1rem; border-radius: 12px; white-space: nowrap; flex-shrink: 0;">Nahrát</button>
               </div>
@@ -422,7 +398,6 @@
 
         <button class="btn-ulozit" style="width: 100%; margin-top: 5px;" onclick="ulozitNastaveni('terminal')">Uložit nastavení terminálu</button>
 
-        <!-- BLOK 3: Systémová akční tlačítka -->
         <div style="display: flex; gap: 15px; margin-top: 30px; padding-top: 25px; border-top: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap;">
           <button class="btn-system btn-sys-blue" onclick="akceSystemu('restart')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
@@ -727,7 +702,6 @@
           <label>Přihlašovací E-mail (Volitelné)</label>
           <input type="email" id="wiz-admin-email" placeholder="admin@skola.cz">
         </div>
-        <!-- ZMĚNA ZDE: Odebrán styl grid-column: 1 / -1; -->
         <div class="filtr-skupina">
           <label>Heslo (do Administrace)</label>
           <input type="password" id="wiz-admin-heslo" placeholder="Zadejte heslo">
