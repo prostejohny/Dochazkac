@@ -771,7 +771,6 @@ def ziskej_logy():
     return jsonify(serazene_logy)
 
 @aplikace.route('/api/logy/smazat/<int:id_zaznamu>', methods=['DELETE'])
-@vyzaduj_admina
 def smaz_log(id_zaznamu):
     """Smaže jeden záznam docházky z paměti i z databáze (funkce 'Vrátit zpět')."""
     uspech = logy_dochazky.smaz_zaznam(id_zaznamu)

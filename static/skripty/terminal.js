@@ -350,7 +350,7 @@ function ukazToast(action, name, msg, color, barColor, idZaznamu = null, jeVyzva
 
   if (idZaznamu) {
       undoBtn.style.display = 'block';
-      undoBtn.textContent = '↩ Vrátit zpět (Omyl)';
+      undoBtn.textContent = '↩ Vrátit zpět';
       undoBtn.onclick = () => zrusitAkci(idZaznamu);
   } else {
       undoBtn.style.display = 'none';
@@ -375,9 +375,12 @@ function ukazToast(action, name, msg, color, barColor, idZaznamu = null, jeVyzva
  * @param {number} idZaznamu - ID záznamu k smazání
  */
 async function zrusitAkci(idZaznamu) {
+    // Vizuálně schová stávající toast s odpočtem
     document.getElementById('notifikace').classList.remove('show');
+    
     try {
         const response = await fetch(`/api/logy/smazat/${idZaznamu}`, { method: 'DELETE' });
+        
         if (response.ok) {
             await nactiLogyZBackendu();
             vybranaAkce = '';
@@ -386,8 +389,20 @@ async function zrusitAkci(idZaznamu) {
             setTimeout(() => {
                 ukazToast('Zrušeno', '', 'Vaše akce byla smazána.', 'var(--accent-yellow)', 'rgba(245, 158, 11, 0.6)');
             }, 300);
+        } else {
+            // PŘIDÁNO: Zpracování chybové odpovědi ze serveru
+            const vysledek = await response.json();
+            setTimeout(() => {
+                ukazToast('Chyba', '', vysledek.chyba || 'Akci se nepodařilo zrušit.', 'var(--accent-red)', 'rgba(239, 68, 68, 0.6)');
+            }, 300);
         }
-    } catch (e) { console.error("Chyba při rušení akce:", e); }
+    } catch (e) { 
+        console.error("Chyba při rušení akce:", e); 
+        // PŘIDÁNO: Ošetření výpadku spojení
+        setTimeout(() => {
+            ukazToast('Chyba spojení', '', 'Nelze se spojit se serverem pro smazání záznamu.', 'var(--accent-red)', 'rgba(239, 68, 68, 0.6)');
+        }, 300);
+    }
 }
 
 
